@@ -54,10 +54,10 @@ export default function Settings({
 
       <div className="screen-body screen-content">
         <div className="settings-profile-card profile-card">
-          <div className="settings-profile-card__avatar profile-avatar" aria-hidden="true">ま</div>
+          <div className="settings-profile-card__avatar profile-avatar" aria-hidden="true">u</div>
           <div>
             <p className="eyebrow">ひとり暮らし献立</p>
-            <h1 id="settings-title">まいさんの設定</h1>
+            <h1 id="settings-title">userの設定</h1>
             <p>入力内容を献立提案の条件として使用します。</p>
           </div>
         </div>
