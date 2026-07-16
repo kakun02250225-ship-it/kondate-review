@@ -21,7 +21,6 @@ import {
   feedbackOptions,
   ingredients,
   mealPlans,
-  receiptItems,
   recipes,
   shoppingList,
   unavailableIngredientScenario,
@@ -410,6 +409,20 @@ export default function MealMateApp() {
     [unavailableIngredientId, visibleShoppingGroups],
   );
 
+  const receiptScannedItems = useMemo(
+    () => visibleShoppingGroups
+      .filter((group) => group.category !== "調味料")
+      .flatMap((group) => (group.items ?? []).map((item) => ({
+        id: `receipt-${item.id ?? item.ingredientId}`,
+        ingredientId: item.ingredientId,
+        name: item.name,
+        quantity: [item.amount, item.unit].filter(Boolean).join(""),
+        category: group.category,
+        confidence: 96,
+      }))),
+    [visibleShoppingGroups],
+  );
+
   const unavailableShoppingItem = useMemo(
     () => visibleShoppingGroups
       .flatMap((group) => group.items)
@@ -521,12 +534,13 @@ export default function MealMateApp() {
     moveTo("shoppingList", "鶏むね肉を使わない献立に組み直しました");
   };
 
-  const registerReceipt = (items = receiptItems) => {
-    const names = items
+  const registerReceipt = (items) => {
+    const scannedItems = items?.length ? items : receiptScannedItems;
+    const names = scannedItems
       .map((item) => (typeof item === "string" ? item : item.name ?? item.label))
       .filter(Boolean);
     const purchasedIngredientIds = new Set(
-      items
+      scannedItems
         .map((item) => (typeof item === "object" ? item.ingredientId : null))
         .filter(Boolean),
     );
@@ -781,7 +795,7 @@ export default function MealMateApp() {
       case "receiptScan":
         return (
           <ReceiptScan
-            items={receiptItems}
+            items={receiptScannedItems}
             hasScanned={hasScannedReceipt}
             onScan={() => setHasScannedReceipt(true)}
             onRegister={registerReceipt}
