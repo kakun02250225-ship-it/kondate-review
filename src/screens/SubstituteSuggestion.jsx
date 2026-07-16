@@ -61,14 +61,14 @@ export default function SubstituteSuggestion({
     <section className="screen substitute-suggestion-screen">
       <Header
         onBack={onBack}
-        subtitle="元の条件に近い順に並べています"
+        subtitle="選んだ食材だけを置き換えます。他の商品はそのままです"
         title="代替食材の提案"
       />
 
       <div className="screen-body">
         <div className="substitution-summary">
           <span className="substitution-summary__item">
-            <small>元の食材</small>
+            <small>買えなかった食材</small>
             <strong>{originalIngredient.name ?? entry.originalName ?? "鶏むね肉"}</strong>
           </span>
           <span className="substitution-summary__arrow" aria-hidden="true">→</span>
@@ -79,10 +79,10 @@ export default function SubstituteSuggestion({
         </div>
 
         <div className="assistant-message">
-          <span className="assistant-message__avatar" aria-hidden="true">✓</span>
+          <span className="assistant-message__avatar" aria-hidden="true">✨</span>
           <div>
-            <strong>高たんぱく・時短の条件を維持</strong>
-            <p>{entry.message ?? "価格と栄養の差が小さく、同じ手順で作りやすい食材を選びました。"}</p>
+            <strong>この画面では、買えなかった食材の代わりだけを選びます</strong>
+            <p>候補を1つ選んで確定すると、買い物リストとレシピ内の該当食材だけが変更されます。選ばなかった商品や他の献立は変更されません。</p>
           </div>
         </div>
 
@@ -127,7 +127,7 @@ export default function SubstituteSuggestion({
                     </span>
                   </span>
                   <span className="substitute-card__note">
-                    {details.note ?? "元のレシピとほぼ同じ手順で調理できます"}
+                    {details.note ?? "元のレシピに近い手順で調理できます。"}
                   </span>
                 </span>
               </label>
@@ -137,7 +137,7 @@ export default function SubstituteSuggestion({
 
         {candidateList.length === 0 && (
           <div className="empty-state">
-            <span aria-hidden="true">🥬</span>
+            <span aria-hidden="true">🛒</span>
             <h2>代替候補がありません</h2>
             <p>戻って「献立を再作成」を選んでください。</p>
           </div>
@@ -150,9 +150,9 @@ export default function SubstituteSuggestion({
             onClick={() => confirmSubstitute?.(effectiveSelectedId)}
             type="button"
           >
-            この食材に変更
+            選んだ食材に変更
           </button>
-          <p className="action-help">買い物リストの食材が自動で置き換わります</p>
+          <p className="action-help">変更されるのは、買えなかった食材とそれを使うレシピだけです。</p>
         </div>
       </div>
     </section>

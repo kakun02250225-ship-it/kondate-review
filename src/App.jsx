@@ -361,12 +361,28 @@ export default function MealMateApp() {
     const names = items
       .map((item) => (typeof item === "string" ? item : item.name ?? item.label))
       .filter(Boolean);
+    const purchasedIngredientIds = new Set(
+      items
+        .map((item) => (typeof item === "object" ? item.ingredientId : null))
+        .filter(Boolean),
+    );
+    const purchasedNames = new Set(names);
+    const purchasedShoppingIds = visibleShoppingGroups
+      .flatMap((group) => group.items ?? [])
+      .filter((item) => purchasedIngredientIds.has(item.ingredientId) || purchasedNames.has(item.name))
+      .map((item) => item.id ?? item.shoppingItemId ?? item.ingredientId)
+      .filter(Boolean);
+
+    setCheckedItems((previous) => ({
+      ...previous,
+      ...Object.fromEntries(purchasedShoppingIds.map((id) => [id, true])),
+    }));
     setInventory((previous) => [...new Set([...listValues(previous), ...names])]);
     setProfile((previous) => ({
       ...previous,
       fridge: [...new Set([...listValues(previous.fridge), ...names])],
     }));
-    moveTo("shoppingList", `${names.length}品を冷蔵庫に登録しました`);
+    moveTo("shoppingList", `${names.length}品を購入済みにして、冷蔵庫に登録しました`);
   };
 
   const toggleFeedback = (id, nextSelected) => {
@@ -607,6 +623,7 @@ export default function MealMateApp() {
           <Cooking
             recipe={cookingRecipe}
             currentStep={cookingStep}
+            tasteNote={tasteNote}
             onNext={setCookingStep}
             onComplete={() => moveTo("feedback")}
             onBack={() => moveTo("recipeConfirm")}

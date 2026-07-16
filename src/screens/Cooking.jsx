@@ -11,6 +11,7 @@ export default function Cooking({
   recipe = recipes?.[0],
   currentStep,
   timerLabel,
+  tasteNote,
   onNext,
   onComplete,
   onBack,
@@ -60,6 +61,13 @@ export default function Cooking({
             <strong>{timerLabel ?? `約${recipe.cookingTime ?? 30}分`}</strong>
           </div>
         </div>
+
+        {tasteNote?.trim() && (
+          <div className="info-card taste-note-card">
+            <p className="eyebrow">今回の味メモ</p>
+            <p>{tasteNote}</p>
+          </div>
+        )}
 
         <article className="current-step-card">
           <p className="eyebrow">いまの手順</p>
