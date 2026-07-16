@@ -17,6 +17,7 @@ import Cooking from "./screens/Cooking";
 import Feedback from "./screens/Feedback";
 import Settings from "./screens/Settings";
 import {
+  allergenOptions,
   bottomNavItems,
   feedbackOptions,
   ingredients,
@@ -41,11 +42,12 @@ const initialConditions = {
   duration: "3days",
   days: 3,
   mealType: "dinner",
-  budget: "3000",
-  nutrients: ["たんぱく質", "バランス"],
-  cookTime: 30,
-  constraints: ["洗い物を減らしたい", "冷蔵庫の食材を使いたい"],
-  exercise: "筋トレ",
+  budget: "",
+  nutrients: [],
+  cookTime: "",
+  constraints: [],
+  moods: [],
+  cuisines: [],
 };
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -64,25 +66,9 @@ const cleanMealLabels = {
 
 const planRecipes = {
   breakfast: ["recipe-8", "recipe-9"],
-  lunch: ["recipe-11", "recipe-5", "recipe-12", "recipe-2", "recipe-6"],
-  dinner: ["recipe-14", "recipe-1", "recipe-13", "recipe-10", "recipe-3", "recipe-4"],
+  lunch: ["recipe-20", "recipe-19", "recipe-15", "recipe-11", "recipe-5", "recipe-12", "recipe-2", "recipe-6", "recipe-16", "recipe-21", "recipe-22"],
+  dinner: ["recipe-17", "recipe-16", "recipe-22", "recipe-14", "recipe-18", "recipe-1", "recipe-13", "recipe-10", "recipe-20", "recipe-21", "recipe-3", "recipe-4"],
 };
-
-const allergyIngredientIds = [
-  "egg",
-  "tofu",
-  "natto",
-  "salmon",
-  "mackerel",
-  "tuna",
-  "chicken-breast",
-  "ground-chicken",
-  "pork",
-  "yogurt",
-  "rice",
-  "udon",
-  "pasta",
-];
 
 function listValues(value) {
   if (Array.isArray(value)) return value;
@@ -106,11 +92,42 @@ function normaliseIngredientIds(values) {
     .filter(Boolean);
 }
 
+function normaliseAllergyValues(values) {
+  return listValues(values)
+    .map((value) => {
+      const trimmed = String(value).trim();
+      const direct = allergenOptions.find(
+        (option) => option.value === trimmed || option.label === trimmed,
+      );
+      if (direct) return direct.value;
+      const containing = allergenOptions.find((option) => option.ingredientIds?.includes(trimmed));
+      return containing?.value ?? trimmed;
+    })
+    .filter(Boolean);
+}
+
+function blockedIngredientIdsForProfile(profile) {
+  const allergyIds = normaliseAllergyValues(profile?.allergies).flatMap((value) => {
+    const option = allergenOptions.find((candidate) => candidate.value === value);
+    if (option) return option.ingredientIds ?? [];
+    return ingredients.some((ingredient) => ingredient.id === value) ? [value] : [];
+  });
+  const dislikeValues = listValues(profile?.dislikes);
+  const dislikeIds = normaliseIngredientIds(dislikeValues);
+  if (dislikeValues.some((value) => String(value).includes("魚"))) {
+    dislikeIds.push("salmon", "mackerel", "tuna", "fish-sauce");
+  }
+  if (dislikeValues.some((value) => String(value).includes("辛"))) {
+    dislikeIds.push("kimchi");
+  }
+  return [...new Set([...allergyIds, ...dislikeIds])];
+}
+
 function normaliseProfile(value) {
   return {
     ...value,
     name: typeof value?.name === "string" && value.name.trim() ? value.name.trim() : "user",
-    allergies: normaliseIngredientIds(value?.allergies),
+    allergies: normaliseAllergyValues(value?.allergies),
     dislikes: listValues(value?.dislikes),
     goals: listValues(value?.goals),
     fridge: listValues(value?.fridge),
@@ -128,24 +145,91 @@ function supportsMealType(recipe, mealType) {
   return types.includes(mealType);
 }
 
+function mealCountFromConditions(conditions = {}) {
+  const duration = conditions.duration ?? "3days";
+  if (duration === "meal") return 1;
+  if (duration === "1day") return 3;
+  if (duration === "7days") return 21;
+  return 9;
+}
+
+function buildPriorities(conditions = {}, profile = {}) {
+  const priorities = [];
+  if (normaliseAllergyValues(profile.allergies).length) priorities.push("アレルギー除外");
+  if (conditions.cookTime) priorities.push(`${conditions.cookTime}分以内`);
+  if (conditions.budget) priorities.push(`予算${Number(conditions.budget).toLocaleString()}円以内`);
+  (conditions.constraints ?? []).forEach((value) => priorities.push(value));
+  (conditions.moods ?? []).forEach((value) => priorities.push(value));
+  (conditions.nutrients ?? []).forEach((value) => priorities.push(`${value}を重視`));
+  (conditions.cuisines ?? []).forEach((value) => priorities.push(`${value}の気分`));
+  if (!priorities.length) priorities.push("時短・価格・栄養・献立の変化を総合評価");
+  return priorities;
+}
+
+function recipeCuisineMatches(recipe, requested = []) {
+  if (!requested.length) return false;
+  const haystack = [recipe.cuisine, ...(recipe.tags ?? [])].filter(Boolean).join(" ");
+  return requested.some((value) => haystack.includes(value));
+}
+
+function countRecipeIngredients(recipe, predicate) {
+  return (recipe.ingredients ?? []).filter((item) => {
+    const ingredient = ingredients.find((candidate) => candidate.id === item.ingredientId);
+    return predicate(ingredient, item);
+  }).length;
+}
+
 function scoreRecipe(recipe, conditions = {}, preferredIds = []) {
   const maxCookTime = Number(conditions?.cookTime ?? 0);
   const budget = Number(conditions?.budget ?? 0);
   const preferredIndex = preferredIds.indexOf(recipe.id);
+  const constraints = conditions.constraints ?? [];
+  const nutrients = conditions.nutrients ?? [];
+  const moods = conditions.moods ?? [];
+  const fridgeIngredientIds = conditions.fridgeIngredientIds ?? [];
   let score = 0;
 
-  if (preferredIndex >= 0) score += Math.max(0, 18 - preferredIndex * 2);
+  if (preferredIndex >= 0) score += Math.max(0, 14 - preferredIndex);
   if (maxCookTime) {
-    score += Number(recipe.cookingTime ?? 0) <= maxCookTime ? 40 : -40;
-    score += Math.max(-12, maxCookTime - Number(recipe.cookingTime ?? 0));
+    score += Number(recipe.cookingTime ?? 0) <= maxCookTime ? 70 : -100;
+    score += Math.max(-15, maxCookTime - Number(recipe.cookingTime ?? 0));
   }
   if (budget) {
-    const perMealBudget = budget / 3;
-    score += Number(recipe.price ?? 0) <= perMealBudget ? 12 : -8;
+    const perMealBudget = budget / mealCountFromConditions(conditions);
+    score += Number(recipe.price ?? 0) <= perMealBudget ? 45 : -45;
+    score += Math.max(-18, Math.min(18, (perMealBudget - Number(recipe.price ?? 0)) / 20));
   }
-  score += Math.max(0, 5 - Number(recipe.washingLevel ?? 3)) * 3;
-  score += Math.min(10, Number(recipe.protein ?? 0) / 4);
-  if ((recipe.tags ?? []).some((tag) => String(tag).includes("麺"))) score += 4;
+  if (constraints.includes("時間を短くしたい")) score += Math.max(0, 30 - Number(recipe.cookingTime ?? 0));
+  if (constraints.includes("洗い物を減らしたい")) score += Math.max(0, 4 - Number(recipe.washingLevel ?? 3)) * 12;
+  if (constraints.includes("簡単な料理にしたい")) score += recipe.difficulty === "かんたん" ? 24 : 0;
+  if (constraints.includes("冷蔵庫の食材を使いたい")) {
+    const reused = (recipe.ingredients ?? []).filter((item) => fridgeIngredientIds.includes(item.ingredientId)).length;
+    score += reused * 20;
+  }
+  if (moods.includes("疲れている")) {
+    score += Math.max(0, 25 - Number(recipe.cookingTime ?? 0));
+    score += Math.max(0, 3 - Number(recipe.washingLevel ?? 3)) * 10;
+  }
+  if (moods.includes("食欲がない") || moods.includes("さっぱり食べたい")) {
+    score += (recipe.tags ?? []).some((tag) => String(tag).includes("さっぱり") || String(tag).includes("やさしい")) ? 28 : 0;
+  }
+  if (moods.includes("しっかり食べたい")) score += Number(recipe.kcal ?? 0) >= 550 ? 20 : 0;
+  if (nutrients.includes("たんぱく質")) score += Math.min(28, Number(recipe.protein ?? 0));
+  if (nutrients.includes("野菜")) {
+    score += countRecipeIngredients(recipe, (ingredient) => ingredient?.category === "野菜" || ingredient?.category === "野菜・果物") * 10;
+  }
+  if (nutrients.includes("低脂質")) score += Math.max(0, 24 - Number(recipe.fat ?? 0));
+  if (nutrients.includes("バランス")) {
+    const hasProtein = Number(recipe.protein ?? 0) >= 20;
+    const hasVegetable = countRecipeIngredients(recipe, (ingredient) => ingredient?.category === "野菜") >= 1;
+    const hasStaple = countRecipeIngredients(recipe, (ingredient) => ingredient?.category === "主食") >= 1;
+    score += [hasProtein, hasVegetable, hasStaple].filter(Boolean).length * 8;
+  }
+  if (recipeCuisineMatches(recipe, conditions.cuisines ?? [])) score += 32;
+  if (!maxCookTime && !budget && !constraints.length && !nutrients.length && !moods.length) {
+    score += Math.max(0, 4 - Number(recipe.washingLevel ?? 3)) * 4;
+    score += Math.min(8, Number(recipe.protein ?? 0) / 5);
+  }
   return score;
 }
 
@@ -165,6 +249,93 @@ function safeRecipeFor(mealType, blockedIngredientIds, preferredIds = [], condit
   return ranked.find(fitsTime)?.id ?? ranked[0]?.id ?? preferredIds[0] ?? recipes[0]?.id;
 }
 
+const substitutionFamilies = [
+  ["chicken-breast", "chicken-tender", "ground-chicken", "pork", "tuna", "tofu", "chickpeas"],
+  ["salmon", "mackerel", "tuna", "chicken-breast", "chicken-tender"],
+  ["tofu", "egg", "natto", "chickpeas", "ground-chicken", "tuna"],
+  ["cabbage", "broccoli", "bell-pepper", "bean-sprouts", "onion", "carrot", "tomato"],
+  ["rice", "udon", "pasta", "somen", "oats"],
+];
+
+const preparationMinuteOffsets = {
+  tuna: -8,
+  tofu: -4,
+  chickpeas: -4,
+  "ground-chicken": -3,
+  "bean-sprouts": -3,
+  "chicken-tender": 0,
+  "chicken-breast": 0,
+  pork: 0,
+  salmon: 0,
+  mackerel: 0,
+};
+
+function impactLabel(candidateValue, originalValue) {
+  if (!Number(originalValue)) return "比較データなし";
+  const ratio = Number(candidateValue) / Number(originalValue);
+  if (ratio >= 1.2) return "増える";
+  if (ratio <= 0.8) return "減る";
+  return "ほぼ同じ";
+}
+
+function rankSubstituteCandidates(originalId, conditions = {}, blockedIngredientIds = []) {
+  const original = ingredients.find((ingredient) => ingredient.id === originalId);
+  if (!original) return [];
+  const family = substitutionFamilies.find((candidateFamily) => candidateFamily.includes(originalId)) ?? [];
+  const candidateIds = [...new Set([...(original.alternatives ?? []), ...family])];
+
+  return candidateIds
+    .filter((id) => id !== originalId && !blockedIngredientIds.includes(id))
+    .map((id) => {
+      const candidate = ingredients.find((ingredient) => ingredient.id === id);
+      if (!candidate) return null;
+      const directIndex = (original.alternatives ?? []).indexOf(id);
+      const priceDelta = Number(candidate.priceEstimate ?? 0) - Number(original.priceEstimate ?? 0);
+      const proteinRatio = Number(original.proteinPer100g ?? 0)
+        ? Number(candidate.proteinPer100g ?? 0) / Number(original.proteinPer100g)
+        : 1;
+      const kcalRatio = Number(original.kcalPer100g ?? 0)
+        ? Number(candidate.kcalPer100g ?? 0) / Number(original.kcalPer100g)
+        : 1;
+      const timeDelta = preparationMinuteOffsets[id] ?? 0;
+      let score = 0;
+
+      if (directIndex >= 0) score += 70 - directIndex * 8;
+      if (candidate.category === original.category) score += 30;
+      score += Math.max(0, 30 - Math.abs(1 - proteinRatio) * 35);
+      score += Math.max(0, 18 - Math.abs(1 - kcalRatio) * 18);
+      if (priceDelta <= 0) score += 18;
+      if ((conditions.nutrients ?? []).includes("たんぱく質")) score += Math.min(24, Number(candidate.proteinPer100g ?? 0));
+      if ((conditions.nutrients ?? []).includes("低脂質") && kcalRatio <= 1) score += 15;
+      if (conditions.budget && priceDelta <= 0) score += 12;
+      if (conditions.cookTime && timeDelta <= 0) score += 10;
+
+      const keptConditions = [];
+      if (Math.abs(1 - proteinRatio) <= 0.25) keptConditions.push("たんぱく質が近い");
+      if (priceDelta <= 0) keptConditions.push("予算を抑えやすい");
+      if (timeDelta <= 0) keptConditions.push("調理時間を維持");
+      if (candidate.category === original.category) keptConditions.push("同じ売り場で探せる");
+
+      return {
+        ingredientId: candidate.id,
+        name: candidate.name,
+        score,
+        priceDelta,
+        kcalImpact: impactLabel(candidate.kcalPer100g, original.kcalPer100g),
+        proteinImpact: impactLabel(candidate.proteinPer100g, original.proteinPer100g),
+        cookingTimeImpact: timeDelta === 0 ? "変化なし" : `${Math.abs(timeDelta)}分ほど短縮`,
+        keptConditions,
+        note: directIndex >= 0
+          ? "料理での使いやすさと、価格・栄養・調理時間の近さをまとめて評価しました。"
+          : "同じ役割の食材から、価格・栄養・調理時間が近い候補を追加しました。",
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5)
+    .map((candidate, index) => ({ ...candidate, recommended: index === 0 }));
+}
+
 function applyPlanRules(plan, blockedIngredientIds, conditions) {
   if (!plan) return plan;
   const nextPlan = clone(plan);
@@ -181,7 +352,7 @@ function applyPlanRules(plan, blockedIngredientIds, conditions) {
       day.meals[mealType] = bestRecipe?.id ?? safeRecipeFor(mealType, blockedIngredientIds, planRecipes[mealType], conditions);
     });
   });
-  const allergyNames = blockedIngredientIds
+  const allergyNames = conditions?.allergyLabels?.length ? conditions.allergyLabels : blockedIngredientIds
     .map((id) => ingredients.find((ingredient) => ingredient.id === id)?.name)
     .filter(Boolean);
   nextPlan.excludedAllergyIngredientIds = blockedIngredientIds;
@@ -190,6 +361,10 @@ function applyPlanRules(plan, blockedIngredientIds, conditions) {
   }
   if (conditions?.cookTime) {
     nextPlan.timeNote = `調理時間は${conditions.cookTime}分以内を優先しています。`;
+  }
+  nextPlan.appliedPriorities = conditions?.appliedPriorities ?? [];
+  if (conditions?.cuisines?.length) {
+    nextPlan.cuisineNote = `時間など上位条件を満たす範囲で、${conditions.cuisines.join("・")}の料理を優先しました。`;
   }
   return nextPlan;
 }
@@ -207,13 +382,34 @@ function firstRecipeId(plan) {
   return meals.dinner ?? meals.lunch ?? meals.breakfast ?? recipes[0]?.id;
 }
 
+function parseIngredientAmount(value) {
+  if (typeof value !== "string") return null;
+  const match = value.trim().match(/^(\d+\/\d+|\d+(?:\.\d+)?)(.*)$/);
+  if (!match) return null;
+  const number = match[1].includes("/")
+    ? match[1].split("/").reduce((left, right) => Number(left) / Number(right))
+    : Number(match[1]);
+  return Number.isFinite(number) ? { value: number, unit: match[2].trim() } : null;
+}
+
+function displayAggregatedNumber(value) {
+  return Number.isInteger(value) ? value : Number(value.toFixed(1));
+}
+
 function buildPlan(conditions, profile) {
   const duration = conditions?.duration ?? `${conditions?.days ?? 3}days`;
   const mealType = conditions?.mealType ?? "dinner";
-  const blockedIngredientIds = normaliseIngredientIds(profile?.allergies);
+  const blockedIngredientIds = blockedIngredientIdsForProfile(profile);
+  const effectiveConditions = {
+    ...conditions,
+    fridgeIngredientIds: normaliseIngredientIds(profile?.fridge),
+    allergyLabels: normaliseAllergyValues(profile?.allergies)
+      .map((value) => allergenOptions.find((option) => option.value === value)?.label ?? value),
+    appliedPriorities: buildPriorities(conditions, profile),
+  };
 
   if (duration === "meal") {
-    const recipeId = safeRecipeFor(mealType, blockedIngredientIds, planRecipes[mealType] ?? planRecipes.dinner, conditions);
+    const recipeId = safeRecipeFor(mealType, blockedIngredientIds, planRecipes[mealType] ?? planRecipes.dinner, effectiveConditions);
     return applyPlanRules({
       id: `plan-one-${mealType}`,
       label: `1食分（${cleanMealLabels[mealType]}）`,
@@ -228,7 +424,7 @@ function buildPlan(conditions, profile) {
           meals: { [mealType]: recipeId },
         },
       ],
-    }, blockedIngredientIds, conditions);
+    }, blockedIngredientIds, effectiveConditions);
   }
 
   if (duration === "1day" || Number(conditions?.days) === 1) {
@@ -237,7 +433,7 @@ function buildPlan(conditions, profile) {
       title: "1日分の献立",
       label: "1日分",
       mealSlots: ["breakfast", "lunch", "dinner"],
-    }, blockedIngredientIds, conditions);
+    }, blockedIngredientIds, effectiveConditions);
   }
 
   if (duration === "7days" || Number(conditions?.days) === 7) {
@@ -258,7 +454,7 @@ function buildPlan(conditions, profile) {
           label: `${index + 1}日目`,
         };
       }),
-    }, blockedIngredientIds, conditions);
+    }, blockedIngredientIds, effectiveConditions);
   }
 
   return applyPlanRules({
@@ -266,7 +462,7 @@ function buildPlan(conditions, profile) {
     title: "3日分の献立",
     label: "3日分",
     mealSlots: ["breakfast", "lunch", "dinner"],
-  }, blockedIngredientIds, conditions);
+  }, blockedIngredientIds, effectiveConditions);
 }
 
 function navIdForScreen(screen) {
@@ -293,7 +489,7 @@ function editableSettingValue(id, profile) {
   if (id === "budget") return profile.monthlyBudget ?? "";
   if (id === "fridge") return listValues(profile.fridge).join("、");
   if (id === "allergies") return listValues(profile.allergies)
-    .map((value) => ingredients.find((ingredient) => ingredient.id === value)?.name ?? value)
+    .map((value) => allergenOptions.find((option) => option.value === value)?.label ?? value)
     .join("、");
   if (id === "dislikes") return listValues(profile.dislikes).join("、");
   if (id === "taste") return listValues(profile.tastePreferences ?? ["さっぱり", "やや薄味"]).join("、");
@@ -310,7 +506,7 @@ const settingLabels = {
   allergies: "アレルギー食材",
   dislikes: "苦手な食材",
   taste: "味の好み",
-  goals: "食事の目的",
+  goals: "普段優先したいこと",
 };
 
 export default function MealMateApp() {
@@ -343,6 +539,7 @@ export default function MealMateApp() {
   const [settingSelection, setSettingSelection] = useState([]);
   const settingTriggerRef = useRef(null);
   const settingDialogRef = useRef(null);
+  const appContentRef = useRef(null);
 
   const recipeMap = useMemo(
     () => Object.fromEntries(recipes.map((recipe) => [recipe.id, recipe])),
@@ -353,14 +550,26 @@ export default function MealMateApp() {
     [],
   );
   const settingAllergyOptions = useMemo(
-    () => allergyIngredientIds
-      .map((id) => ingredientMap[id])
-      .filter(Boolean)
-      .map((ingredient) => ({ value: ingredient.id, label: ingredient.name })),
-    [ingredientMap],
+    () => allergenOptions.map((option) => ({ value: option.value, label: option.label })),
+    [],
   );
 
   const selectedRecipe = recipeMap[selectedRecipeId] ?? recipeMap[firstRecipeId(activePlan)] ?? recipes[0];
+
+  const mealChangeCandidates = useMemo(() => {
+    if (!editingSlot?.mealType) return [];
+    return rankedRecipesFor(
+      editingSlot.mealType,
+      blockedIngredientIdsForProfile(profile),
+      {
+        ...conditions,
+        fridgeIngredientIds: normaliseIngredientIds(profile.fridge),
+      },
+      planRecipes[editingSlot.mealType] ?? [],
+    )
+      .filter((recipe) => recipe.id !== editingSlot.recipeId)
+      .slice(0, 6);
+  }, [conditions, editingSlot, profile]);
 
   const cookingRecipe = useMemo(() => ({
     ...selectedRecipe,
@@ -385,12 +594,25 @@ export default function MealMateApp() {
       Object.entries(day?.meals ?? {}).forEach(([mealType, recipeId]) => {
         const recipe = recipeMap[recipeId];
         (recipe?.ingredients ?? []).forEach((item) => {
+          const parsedAmount = parseIngredientAmount(item.amount);
           const current = required.get(item.ingredientId) ?? {
-            amount: item.amount,
+            amountValue: 0,
+            amountUnit: parsedAmount?.unit ?? "",
+            rawAmounts: [],
+            useCount: 0,
             name: item.name,
             usedIn: new Set(),
           };
-          current.usedIn.add(`${day.label ?? `${dayIndex + 1}日目`}・${cleanMealLabels[mealType] ?? mealType}`);
+          current.useCount += 1;
+          if (parsedAmount && (!current.amountUnit || current.amountUnit === parsedAmount.unit)) {
+            current.amountUnit = parsedAmount.unit;
+            current.amountValue += parsedAmount.value;
+          } else {
+            current.rawAmounts.push(item.amount);
+          }
+          current.usedIn.add(
+            `${day.label ?? `${dayIndex + 1}日目`}・${cleanMealLabels[mealType] ?? mealType}「${recipe.name}」`,
+          );
           required.set(item.ingredientId, current);
         });
       });
@@ -422,8 +644,12 @@ export default function MealMateApp() {
         id: base.id ?? `shop-${originalId}`,
         ingredientId: replacementId,
         name: replacement?.name ?? details.name ?? original?.name ?? originalId,
-        amount: base.amount ?? details.amount,
-        unit: base.unit ?? "",
+        amount: details.rawAmounts.length
+          ? (new Set(details.rawAmounts).size === 1
+              ? `${details.rawAmounts[0]}${details.useCount > 1 ? `×${details.useCount}` : ""}`
+              : `${details.useCount}回分`)
+          : displayAggregatedNumber(details.amountValue),
+        unit: details.rawAmounts.length ? "" : details.amountUnit,
         usedIn: [...details.usedIn],
         canBeUnavailable: base.canBeUnavailable ?? category !== "調味料",
         substitutedFrom: replacementId !== originalId ? (original?.name ?? details.name) : undefined,
@@ -461,31 +687,49 @@ export default function MealMateApp() {
     [unavailableIngredientId, visibleShoppingGroups],
   );
 
-  const reSuggestedPlan = useMemo(() => {
-    if (unavailableIngredientId === unavailableIngredientScenario?.ingredientId) {
-      return mealPlans.reSuggested;
-    }
+  const smartSubstituteCandidates = useMemo(
+    () => rankSubstituteCandidates(
+      unavailableIngredientId,
+      conditions,
+      blockedIngredientIdsForProfile(profile),
+    ),
+    [conditions, profile, unavailableIngredientId],
+  );
 
+  const reSuggestedPlan = useMemo(() => {
     const next = clone(activePlan);
+    if (!next) return null;
     next.id = `plan-without-${unavailableIngredientId}`;
     next.label = `${ingredientMap[unavailableIngredientId]?.name ?? "対象食材"}を使わない献立`;
     next.summary = "予算・栄養・調理時間をなるべく維持して組み直しました。";
     next.excludedIngredientIds = [unavailableIngredientId];
-    daysFromPlan(next).forEach((day) => {
+    next.appliedPriorities = buildPriorities(conditions, profile);
+    const blockedIds = [...new Set([
+      ...blockedIngredientIdsForProfile(profile),
+      unavailableIngredientId,
+    ])];
+    const effectiveConditions = {
+      ...conditions,
+      fridgeIngredientIds: normaliseIngredientIds(profile.fridge),
+    };
+
+    daysFromPlan(next).forEach((day, dayIndex) => {
       Object.entries(day?.meals ?? {}).forEach(([mealType, recipeId]) => {
         const usesUnavailable = (recipeMap[recipeId]?.ingredients ?? [])
           .some((item) => item.ingredientId === unavailableIngredientId);
         if (!usesUnavailable) return;
-        const replacement = recipes.find((recipe) => {
-          const supportedTypes = Array.isArray(recipe.mealType) ? recipe.mealType : [recipe.mealType];
-          return supportedTypes.includes(mealType)
-            && !(recipe.ingredients ?? []).some((item) => item.ingredientId === unavailableIngredientId);
-        });
+        const ranked = rankedRecipesFor(
+          mealType,
+          blockedIds,
+          effectiveConditions,
+          planRecipes[mealType] ?? [],
+        ).filter((recipe) => recipe.id !== recipeId);
+        const replacement = ranked[dayIndex % Math.max(ranked.length, 1)] ?? ranked[0];
         if (replacement) day.meals[mealType] = replacement.id;
       });
     });
     return next;
-  }, [activePlan, ingredientMap, recipeMap, unavailableIngredientId]);
+  }, [activePlan, conditions, ingredientMap, profile, recipeMap, unavailableIngredientId]);
 
   const reSuggestionPreviewMeals = useMemo(() => {
     const currentDays = daysFromPlan(activePlan);
@@ -621,7 +865,7 @@ export default function MealMateApp() {
       : null;
     setEditingSetting(id);
     setSettingDraft(editableSettingValue(id, { ...profile, fridge: inventory }));
-    setSettingSelection(id === "allergies" ? normaliseIngredientIds(profile.allergies) : []);
+    setSettingSelection(id === "allergies" ? normaliseAllergyValues(profile.allergies) : []);
   };
 
   const saveSetting = () => {
@@ -650,6 +894,12 @@ export default function MealMateApp() {
     closeSetting();
     setNotice("設定を更新しました");
   };
+
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      appContentRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    });
+  }, [currentScreen]);
 
   useEffect(() => {
     if (!editingSetting) return undefined;
@@ -703,14 +953,12 @@ export default function MealMateApp() {
   const onNavChange = (value) => {
     const id = typeof value === "object" ? value.id ?? value.value ?? value.label : value;
     const target = resolveNavTarget(id);
-    if (target === "mealSuggestion" && !activePlan) {
-      moveTo("conditionInput", "まず条件を入れて献立を作成してください");
-      return;
-    }
     if ((target === "shoppingList" || target === "recipeConfirm") && !planConfirmed) {
       moveTo(
-        activePlan ? "mealSuggestion" : "conditionInput",
-        activePlan ? "買い物リストを見る前に、この献立に決定してください" : "先に献立を作成してください",
+        "mealSuggestion",
+        activePlan
+          ? "買い物リストを見る前に、この献立に決定してください"
+          : "献立を決めると、必要な食材と使う料理がここにまとまります",
       );
       return;
     }
@@ -728,9 +976,9 @@ export default function MealMateApp() {
               const normalised = normaliseProfile(next);
               setProfile(normalised);
               setInventory(normalised.fridge);
-              moveTo("conditionInput");
+              moveTo("mealSuggestion");
             }}
-            onSkip={() => moveTo("conditionInput")}
+            onSkip={() => moveTo("mealSuggestion")}
           />
         );
       case "conditionInput":
@@ -739,13 +987,15 @@ export default function MealMateApp() {
             conditions={conditions}
             onConditionsChange={setConditions}
             onCreatePlan={createPlan}
-            onBack={() => moveTo(activePlan ? "mealSuggestion" : "conditionInput")}
+            onBack={() => moveTo("mealSuggestion")}
           />
         );
       case "mealSuggestion":
         return (
           <MealSuggestion
             plan={activePlan}
+            onCreatePlan={() => moveTo("conditionInput")}
+            onEditConditions={() => moveTo("conditionInput")}
             onChangeMeal={(slot) => {
               setEditingSlot(slot);
               moveTo("mealChange");
@@ -754,15 +1004,16 @@ export default function MealMateApp() {
               setPlanConfirmed(true);
               moveTo("shoppingList");
             }}
-            onBack={() => moveTo("conditionInput")}
+            onBack={activePlan ? () => moveTo("conditionInput") : undefined}
           />
         );
       case "mealChange":
         return (
           <MealChange
+            candidates={mealChangeCandidates}
             currentRecipeId={editingSlot?.recipeId}
             editingSlot={editingSlot}
-            excludedIngredientIds={normaliseIngredientIds(profile.allergies)}
+            excludedIngredientIds={blockedIngredientIdsForProfile(profile)}
             maxCookTime={conditions.cookTime}
             selectedRecipeId={editingSlot?.recipeId}
             onSelectRecipe={replaceMeal}
@@ -781,7 +1032,9 @@ export default function MealMateApp() {
             onUnavailableIngredient={(id) => {
               const nextId = id ?? shoppingUnavailableIngredientId;
               setUnavailableIngredientId(nextId);
-              setSelectedSubstituteId(ingredientMap[nextId]?.alternatives?.[0] ?? "");
+              setSelectedSubstituteId(
+                rankSubstituteCandidates(nextId, conditions, blockedIngredientIdsForProfile(profile))[0]?.ingredientId ?? "",
+              );
               moveTo("unavailableIngredient");
             }}
             onReceiptScan={() => moveTo("receiptScan")}
@@ -796,14 +1049,12 @@ export default function MealMateApp() {
         return (
           <UnavailableIngredient
             ingredientId={unavailableIngredientId}
-            scenario={unavailableIngredientId === unavailableIngredientScenario?.ingredientId
-              ? undefined
-              : {
-                  ingredientId: unavailableIngredientId,
-                  usages: unavailableShoppingItem?.usedIn ?? [],
-                  reason: "売り切れ、または予算より高かった場合を想定しています。",
-                  message: "条件に近い代替食材を選ぶか、この食材を使わない献立に組み直せます。",
-                }}
+            scenario={{
+              ingredientId: unavailableIngredientId,
+              usages: unavailableShoppingItem?.usedIn ?? [],
+              reason: "売り切れ、または予算より高かった場合を想定しています。",
+              message: "条件に近い代替食材を選ぶか、この食材を使わない献立に組み直せます。",
+            }}
             onSuggestSubstitute={() => moveTo("substituteSuggestion")}
             onRecreatePlan={() => moveTo("reMealSuggestion")}
             onBack={() => moveTo("shoppingList")}
@@ -812,6 +1063,7 @@ export default function MealMateApp() {
       case "substituteSuggestion":
         return (
           <SubstituteSuggestion
+            candidates={smartSubstituteCandidates}
             originalIngredientId={unavailableIngredientId}
             selectedSubstituteId={selectedSubstituteId}
             onSelectSubstitute={(id) => setSelectedSubstituteId(id)}
@@ -825,6 +1077,8 @@ export default function MealMateApp() {
             mealPlan={reSuggestedPlan}
             suggestedMeals={reSuggestionPreviewMeals}
             removedIngredient={ingredientMap[unavailableIngredientId]?.name ?? "鶏むね肉"}
+            priorities={reSuggestedPlan?.appliedPriorities}
+            maxCookTime={conditions.cookTime}
             onConfirm={confirmReplannedMenu}
             onBack={() => moveTo("unavailableIngredient")}
           />
@@ -885,7 +1139,7 @@ export default function MealMateApp() {
             budget={Number(profile.monthlyBudget) || 0}
             fridgeItems={inventory}
             allergies={listValues(profile.allergies).map((value) => (
-              ingredients.find((ingredient) => ingredient.id === value)?.name ?? value
+              allergenOptions.find((option) => option.value === value)?.label ?? value
             ))}
             dislikes={listValues(profile.dislikes)}
             tastePreferences={listValues(profile.tastePreferences ?? ["さっぱり", "やや薄味"])}
@@ -904,7 +1158,7 @@ export default function MealMateApp() {
   return (
     <main className="prototype-page">
       <PhoneFrame>
-        <div className="app-content">
+        <div className="app-content" ref={appContentRef}>
           {notice && (
             <div className="app-toast" role="status">
               <span aria-hidden="true">✓</span>

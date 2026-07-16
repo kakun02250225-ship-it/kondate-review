@@ -97,6 +97,7 @@ export default function ShoppingList({
               checked={checkedItems}
               checkedItems={checkedItems}
               groups={visibleGroups}
+              showUsedIn
               onUnavailable={(item) => onUnavailableIngredient?.(item.ingredientId)}
               onToggle={toggleItem}
               onToggleItem={toggleItem}

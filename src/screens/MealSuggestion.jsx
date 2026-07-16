@@ -43,12 +43,32 @@ function formatSummary(plan, schedule, recipeMap, slots) {
   };
 }
 
+const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+
+function calendarDaysFor(schedule, count = 7) {
+  const today = new Date();
+  const length = schedule.length || count;
+  return Array.from({ length }, (_, index) => {
+    const date = new Date(today);
+    date.setDate(today.getDate() + index);
+    return {
+      index,
+      date: date.getDate(),
+      weekday: WEEKDAYS[date.getDay()],
+      isToday: index === 0,
+      hasPlan: Boolean(schedule[index]),
+    };
+  });
+}
+
 export default function MealSuggestion({
   plan,
   activePlan,
   onChangeMeal,
   onConfirmPlan,
   onConfirm,
+  onCreatePlan,
+  onEditConditions,
   onBack,
 }) {
   const selectedPlan = plan ?? activePlan;
@@ -57,21 +77,54 @@ export default function MealSuggestion({
   const visibleSlots = MEAL_SLOTS.filter((slot) => !selectedPlan?.mealSlots || selectedPlan.mealSlots.includes(slot.key));
   const summary = formatSummary(selectedPlan, schedule, recipeMap, visibleSlots);
   const confirmPlan = onConfirmPlan ?? onConfirm;
+  const calendarDays = calendarDaysFor(schedule);
 
   return (
     <section className="screen meal-suggestion-screen">
       <Header
         onBack={onBack}
-        subtitle="条件に合わせて、買い物までつながる献立を作りました"
-        title="おすすめ献立"
+        subtitle={selectedPlan
+          ? "日付から献立を確認し、そのまま買い物リストへ進めます"
+          : "献立・買い物・欠品対応をひとつの流れで管理します"}
+        title={selectedPlan ? "献立カレンダー" : "ホーム"}
       />
 
       <div className="screen-body">
         {!selectedPlan || schedule.length === 0 ? (
-          <div className="empty-state">
-            <span aria-hidden="true">🍽️</span>
-            <h2>まだ献立がありません</h2>
-            <p>先に「献立作成」から、1食・1日・3日・1週間のどれを作るか選んでください。</p>
+          <div className="home-empty-state">
+            <section className="home-welcome-card">
+              <span className="eyebrow">今日から無理なく自炊</span>
+              <h2>作る日を決めると、買い物まで迷わず進めます</h2>
+              <p>細かい条件は入力しなくても大丈夫です。献立を決めたあと、必要な食材と使う料理を自動でまとめます。</p>
+              <button className="button button--primary button--large" onClick={onCreatePlan} type="button">
+                献立を作ってカレンダーに入れる
+              </button>
+            </section>
+
+            <section className="calendar-overview calendar-overview--empty" aria-label="今週のカレンダー">
+              <div className="section-heading">
+                <div>
+                  <span className="eyebrow">今週</span>
+                  <h2>献立カレンダー</h2>
+                </div>
+              </div>
+              <div className="calendar-strip">
+                {calendarDays.map((day) => (
+                  <span className={`calendar-day${day.isToday ? " is-today" : ""}`} key={`${day.weekday}-${day.index}`}>
+                    <small>{day.weekday}</small>
+                    <strong>{day.date}</strong>
+                    <i aria-hidden="true" />
+                  </span>
+                ))}
+              </div>
+              <p className="calendar-empty-copy">献立を作ると、日付ごとの朝・昼・夜がここに表示されます。</p>
+            </section>
+
+            <section className="home-flow" aria-label="アプリでできること">
+              <div><span>1</span><strong>献立を決める</strong><small>体調や片付けの負担は任意で追加</small></div>
+              <div><span>2</span><strong>料理別に買う</strong><small>どの料理に使う食材か表示</small></div>
+              <div><span>3</span><strong>買えなくても調整</strong><small>代替か献立の再提案を選択</small></div>
+            </section>
           </div>
         ) : (
           <>
@@ -92,7 +145,48 @@ export default function MealSuggestion({
                   <dd>{summary.protein}</dd>
                 </div>
               </dl>
+              <button className="recommendation-hero__edit" onClick={onEditConditions} type="button">
+                作る範囲・希望を変更
+              </button>
             </div>
+
+            <section className="priority-summary" aria-label="献立で優先した条件">
+              <div>
+                <span className="eyebrow">この順で候補を評価</span>
+                <h2>献立に反映した優先度</h2>
+              </div>
+              <ol>
+                {(selectedPlan.appliedPriorities ?? ["時短・価格・栄養を総合評価"]).map((priority, index) => (
+                  <li key={`${priority}-${index}`}>
+                    <span>{index + 1}</span>
+                    {priority}
+                  </li>
+                ))}
+              </ol>
+            </section>
+
+            <section className="calendar-overview" aria-label="献立の日付一覧">
+              <div className="section-heading">
+                <div>
+                  <span className="eyebrow">カレンダー</span>
+                  <h2>日付を押すと献立へ移動</h2>
+                </div>
+              </div>
+              <div className="calendar-strip">
+                {calendarDays.map((day) => (
+                  <button
+                    className={`calendar-day${day.isToday ? " is-today" : ""}${day.hasPlan ? " has-plan" : ""}`}
+                    key={`${day.weekday}-${day.index}`}
+                    onClick={() => document.getElementById(`meal-day-${day.index}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                    type="button"
+                  >
+                    <small>{day.weekday}</small>
+                    <strong>{day.date}</strong>
+                    <i aria-hidden="true" />
+                  </button>
+                ))}
+              </div>
+            </section>
 
             {selectedPlan.allergyNote && (
               <div className="info-card">
@@ -108,9 +202,16 @@ export default function MealSuggestion({
               </div>
             )}
 
+            {selectedPlan.cuisineNote && (
+              <div className="info-card">
+                <span className="info-card__icon" aria-hidden="true">🌏</span>
+                <p>{selectedPlan.cuisineNote}</p>
+              </div>
+            )}
+
             <div className="meal-plan-days">
               {schedule.map((day, dayIndex) => (
-                <section className="meal-day" key={day.id ?? day.date ?? day.label ?? dayIndex}>
+                <section className="meal-day" id={`meal-day-${dayIndex}`} key={day.id ?? day.date ?? day.label ?? dayIndex}>
                   <div className="section-heading">
                     <div>
                       <span className="eyebrow">DAY {dayIndex + 1}</span>

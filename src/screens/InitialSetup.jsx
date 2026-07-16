@@ -1,5 +1,5 @@
 import Header from "../components/Header";
-import { ingredients, setupOptions } from "../data";
+import { allergenOptions, setupOptions } from "../data";
 
 function optionList(keys, fallback) {
   for (const key of keys) {
@@ -28,27 +28,6 @@ function listValue(value) {
     .map((item) => item.trim())
     .filter(Boolean);
 }
-
-const allergyIngredientIds = [
-  "egg",
-  "tofu",
-  "natto",
-  "salmon",
-  "mackerel",
-  "tuna",
-  "chicken-breast",
-  "ground-chicken",
-  "pork",
-  "yogurt",
-  "rice",
-  "udon",
-  "pasta",
-];
-
-const allergyOptions = allergyIngredientIds
-  .map((id) => ingredients.find((ingredient) => ingredient.id === id))
-  .filter(Boolean)
-  .map((ingredient) => ({ value: ingredient.id, label: ingredient.name }));
 
 function ChoiceGroup({ legend, name, options, value, multiple = false, onChange }) {
   const selectedValues = multiple ? (Array.isArray(value) ? value : []) : [];
@@ -172,14 +151,14 @@ export default function InitialSetup({
         />
 
         <ChoiceGroup
-          legend="アレルギー食材（任意）"
+          legend="アレルギー（該当するものを選択）"
           multiple
           name="allergies"
           onChange={(nextValue) => updateField("allergies", nextValue)}
-          options={allergyOptions}
+          options={allergenOptions}
           value={profile.allergies ?? []}
         />
-        <p className="form-help">チェックした食材を含む料理は、献立候補から外します。</p>
+        <p className="form-help">表示対象のアレルゲンをデータとして管理し、該当食材を含む料理は候補から外します。</p>
 
         <label className="form-field">
           <span className="form-label">苦手な食材（任意）</span>
@@ -192,7 +171,7 @@ export default function InitialSetup({
         </label>
 
         <ChoiceGroup
-          legend="食事で大切にしたいこと"
+          legend="普段の献立で優先したいこと（任意）"
           multiple
           name="goals"
           onChange={(nextValue) => updateField("goals", nextValue)}

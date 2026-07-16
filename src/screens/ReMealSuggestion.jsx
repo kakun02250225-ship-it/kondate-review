@@ -66,6 +66,8 @@ export default function ReMealSuggestion({
   suggestedMeals,
   recipesData = recipes,
   removedIngredient = '鶏むね肉',
+  priorities,
+  maxCookTime,
   onConfirm,
   onBack,
 }) {
@@ -75,6 +77,8 @@ export default function ReMealSuggestion({
     (sum, item) => sum + (Number(item.recipe.price) || 0),
     0,
   );
+  const maintainedPriorities = (priorities ?? mealPlan?.appliedPriorities ?? [])
+    .filter((priority) => !maxCookTime || priority !== `${maxCookTime}分以内`);
 
   return (
     <section className="screen remeal-suggestion-screen">
@@ -95,8 +99,10 @@ export default function ReMealSuggestion({
 
         <div className="summary-chips" aria-label="新しい献立の条件">
           <span className="choice-chip">予算目安 ¥{totalPrice.toLocaleString('ja-JP')}</span>
-          <span className="choice-chip">栄養バランスを維持</span>
-          <span className="choice-chip">45分以内</span>
+          {maxCookTime ? <span className="choice-chip">{maxCookTime}分以内を維持</span> : null}
+          {maintainedPriorities.slice(0, 4).map((priority) => (
+            <span className="choice-chip" key={priority}>{priority}</span>
+          ))}
         </div>
 
         <div className="meal-list meal-plan" aria-label="作り直した献立">

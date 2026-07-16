@@ -58,7 +58,7 @@ export default function SubstituteSuggestion({
   }));
   const candidateList =
     candidates ?? entry.candidates ?? entry.alternatives ?? entry.substitutes ?? fallbackCandidates;
-  const effectiveSelectedId = selectedSubstituteId ?? selectedId ?? candidateId(candidateList[0]);
+  const effectiveSelectedId = selectedSubstituteId || selectedId || candidateId(candidateList[0]);
   const selectSubstitute = onSelectSubstitute ?? onSelect;
   const confirmSubstitute = onConfirmSubstitute ?? onConfirm;
 
@@ -134,6 +134,16 @@ export default function SubstituteSuggestion({
                   <span className="substitute-card__note">
                     {details.note ?? "元のレシピに近い手順で調理できます。"}
                   </span>
+                  {details.keptConditions?.length > 0 && (
+                    <span className="substitute-card__kept">
+                      <small>維持しやすい条件</small>
+                      <span>
+                        {details.keptConditions.map((label) => (
+                          <i key={label}>{label}</i>
+                        ))}
+                      </span>
+                    </span>
+                  )}
                 </span>
               </label>
             );

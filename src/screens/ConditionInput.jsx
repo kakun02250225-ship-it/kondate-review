@@ -18,7 +18,7 @@ function optionLabel(option) {
   return typeof option === "object" ? option.label ?? option.name ?? option.value : option;
 }
 
-function SelectableChoices({ legend, name, options, value, multiple = false, onChange }) {
+function SelectableChoices({ legend, name, options, value, multiple = false, allowClear = false, onChange }) {
   const selectedValues = multiple ? (Array.isArray(value) ? value : []) : [];
 
   return (
@@ -54,6 +54,11 @@ function SelectableChoices({ legend, name, options, value, multiple = false, onC
           );
         })}
       </div>
+      {!multiple && allowClear && value !== "" && value !== undefined && (
+        <button className="choice-clear" onClick={() => onChange("")} type="button">
+          指定を外す
+        </button>
+      )}
     </fieldset>
   );
 }
@@ -88,6 +93,28 @@ export default function ConditionInput({
     "簡単な料理にしたい",
     "冷蔵庫の食材を使いたい",
   ]);
+  const moodOptions = readOptions(["moods", "conditions"], [
+    "疲れている",
+    "食欲がない",
+    "しっかり食べたい",
+    "さっぱり食べたい",
+  ]);
+  const cuisineOptions = readOptions(["cuisines", "flavours"], [
+    "和風",
+    "中華風",
+    "韓国風",
+    "アジア風",
+    "インド風",
+    "洋風",
+  ]);
+  const selectedPriorityLabels = [
+    conditions.cookTime && `${conditions.cookTime}分以内`,
+    conditions.budget && `予算${Number(conditions.budget).toLocaleString()}円以内`,
+    ...(conditions.constraints ?? []),
+    ...(conditions.moods ?? []),
+    ...(conditions.nutrients ?? []).map((value) => `${value}を重視`),
+    ...(conditions.cuisines ?? []).map((value) => `${value}の気分`),
+  ].filter(Boolean);
 
   const updateField = (field, nextValue) => {
     const next = { ...conditions, [field]: nextValue };
@@ -107,18 +134,21 @@ export default function ConditionInput({
     <section className="screen condition-input-screen">
       <Header
         onBack={onBack}
-        subtitle="先に作りたい範囲を決めると、その範囲だけの買い物リストを作ります"
-        title="献立の条件"
+        subtitle="作る範囲だけ選べば進めます。こだわり条件はすべて任意です"
+        title="どのくらい献立を作る？"
       />
 
       <form className="screen-body form-stack" onSubmit={handleSubmit}>
-        <div className="info-card info-card--warm">
+        <div className="info-card info-card--warm condition-intro-card">
           <span className="info-card__icon" aria-hidden="true">✨</span>
-          <p>買い物リストは、ここで作成して決定した献立に必要な食材だけを表示します。</p>
+          <div>
+            <strong>空欄のままでも作成できます</strong>
+            <p>入力がある場合は、安全→時間→予算→負担・体調→栄養→味の順に優先して候補を並べます。</p>
+          </div>
         </div>
 
         <SelectableChoices
-          legend="何回分の献立を作りますか？"
+          legend="作る範囲（ここだけ必須）"
           name="duration"
           onChange={(nextValue) => updateField("duration", nextValue)}
           options={[
@@ -144,8 +174,23 @@ export default function ConditionInput({
           />
         )}
 
+        <div className="form-section-heading">
+          <span className="eyebrow">ここからは任意</span>
+          <h2>今日の希望があれば追加</h2>
+          <p>触らなかった項目は、献立を限定しません。</p>
+        </div>
+
+        <SelectableChoices
+          allowClear
+          legend="調理できる時間（任意）"
+          name="cook-time"
+          onChange={(nextValue) => updateField("cookTime", nextValue)}
+          options={timeOptions}
+          value={conditions.cookTime ?? ""}
+        />
+
         <label className="form-field">
-          <span className="form-label">今回の食費予算</span>
+          <span className="form-label">今回の食費予算（任意）</span>
           <span className="input-with-unit">
             <input
               inputMode="numeric"
@@ -160,7 +205,25 @@ export default function ConditionInput({
         </label>
 
         <SelectableChoices
-          legend="重視したい栄養"
+          legend="負担を減らしたいこと（任意）"
+          multiple
+          name="constraints"
+          onChange={(nextValue) => updateField("constraints", nextValue)}
+          options={constraintOptions}
+          value={conditions.constraints ?? []}
+        />
+
+        <SelectableChoices
+          legend="今日の体調・気分（任意）"
+          multiple
+          name="moods"
+          onChange={(nextValue) => updateField("moods", nextValue)}
+          options={moodOptions}
+          value={conditions.moods ?? []}
+        />
+
+        <SelectableChoices
+          legend="重視したい栄養（任意）"
           multiple
           name="nutrients"
           onChange={(nextValue) => updateField("nutrients", nextValue)}
@@ -169,25 +232,34 @@ export default function ConditionInput({
         />
 
         <SelectableChoices
-          legend="調理できる時間"
-          name="cook-time"
-          onChange={(nextValue) => updateField("cookTime", nextValue)}
-          options={timeOptions}
-          value={conditions.cookTime ?? 30}
+          legend="味の系統（任意）"
+          multiple
+          name="cuisines"
+          onChange={(nextValue) => updateField("cuisines", nextValue)}
+          options={cuisineOptions}
+          value={conditions.cuisines ?? []}
         />
 
-        <SelectableChoices
-          legend="今日の調理条件"
-          multiple
-          name="constraints"
-          onChange={(nextValue) => updateField("constraints", nextValue)}
-          options={constraintOptions}
-          value={conditions.constraints ?? []}
-        />
+        {selectedPriorityLabels.length > 0 && (
+          <section className="priority-preview" aria-label="提案に反映する優先順">
+            <div>
+              <span className="eyebrow">提案に反映する順</span>
+              <h2>選んだ条件の優先度</h2>
+            </div>
+            <ol>
+              {selectedPriorityLabels.map((label, index) => (
+                <li key={`${label}-${index}`}>
+                  <span>{index + 1}</span>
+                  <strong>{label}</strong>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
 
         <div className="form-actions sticky-actions">
           <button className="button button--primary button--large" type="submit">
-            この条件で献立を作成
+            献立を作ってカレンダーを見る
           </button>
         </div>
       </form>

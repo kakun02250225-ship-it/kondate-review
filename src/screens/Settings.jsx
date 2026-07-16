@@ -36,7 +36,7 @@ export default function Settings({
     { id: 'allergies', icon: '!', label: 'アレルギー', value: joinItems(allergies) },
     { id: 'dislikes', icon: '−', label: '苦手な食材', value: joinItems(dislikes) },
     { id: 'taste', icon: '♡', label: '味の好み', value: joinItems(tastePreferences, '未設定') },
-    { id: 'goals', icon: '●', label: '食事の目的', value: joinItems(goals, '未設定') },
+    { id: 'goals', icon: '●', label: '普段優先したいこと', value: joinItems(goals, '未設定') },
   ];
 
   return (
