@@ -1,0 +1,565 @@
+const image = (id) =>
+  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=82`;
+
+export const mealTypeLabels = {
+  breakfast: "朝食",
+  lunch: "昼食",
+  dinner: "夕食",
+};
+
+export const recipes = [
+  {
+    id: "recipe-1",
+    name: "鶏むね肉のポン酢炒め",
+    image: image("photo-1604908176997-125f25cc6f3d"),
+    imageAlt: "鶏むね肉と野菜の炒め物",
+    mealType: "dinner",
+    cookingTime: 15,
+    price: 280,
+    kcal: 420,
+    protein: 39,
+    fat: 12,
+    carb: 35,
+    washingLevel: 1,
+    difficulty: "かんたん",
+    tags: ["高たんぱく", "15分", "フライパン1つ"],
+    reason: "筋トレ後にうれしい高たんぱく。ポン酢だけで味が決まり、洗い物も少なめです。",
+    ingredients: [
+      { ingredientId: "chicken-breast", name: "鶏むね肉", amount: "150g" },
+      { ingredientId: "cabbage", name: "キャベツ", amount: "2枚" },
+      { ingredientId: "onion", name: "玉ねぎ", amount: "1/4個" },
+      { ingredientId: "ponzu", name: "ポン酢", amount: "大さじ2" },
+      { ingredientId: "oil", name: "サラダ油", amount: "小さじ1" },
+    ],
+    steps: [
+      "鶏むね肉をひと口大に切り、キャベツと玉ねぎも食べやすく切る。",
+      "フライパンに油を熱し、鶏むね肉を両面焼く。",
+      "野菜を加えてしんなりするまで炒める。",
+      "ポン酢を回しかけ、全体になじませる。",
+    ],
+  },
+  {
+    id: "recipe-2",
+    name: "豆腐と鶏ひき肉のあんかけ丼",
+    image: image("photo-1569058242253-92a9c755a0ec"),
+    imageAlt: "豆腐とひき肉のあんかけ丼",
+    mealType: "lunch",
+    cookingTime: 20,
+    price: 250,
+    kcal: 548,
+    protein: 30,
+    fat: 14,
+    carb: 72,
+    washingLevel: 2,
+    difficulty: "かんたん",
+    tags: ["節約", "高たんぱく", "丼もの"],
+    reason: "安価な豆腐でボリュームを出し、1皿で主食とたんぱく質を取れます。",
+    ingredients: [
+      { ingredientId: "ground-chicken", name: "鶏ひき肉", amount: "80g" },
+      { ingredientId: "tofu", name: "豆腐", amount: "150g" },
+      { ingredientId: "rice", name: "ごはん", amount: "180g" },
+      { ingredientId: "soy-sauce", name: "しょうゆ", amount: "大さじ1" },
+      { ingredientId: "potato-starch", name: "片栗粉", amount: "小さじ1" },
+    ],
+    steps: [
+      "豆腐を2cm角に切り、片栗粉を同量の水で溶く。",
+      "フライパンで鶏ひき肉を炒め、色が変わったら豆腐を加える。",
+      "しょうゆと水80mlを加え、2分煮る。",
+      "水溶き片栗粉でとろみを付け、ごはんにかける。",
+    ],
+  },
+  {
+    id: "recipe-3",
+    name: "鮭の塩焼き定食",
+    image: image("photo-1467003909585-2f8a72700288"),
+    imageAlt: "焼き鮭とごはんの定食",
+    mealType: "dinner",
+    cookingTime: 20,
+    price: 390,
+    kcal: 510,
+    protein: 32,
+    fat: 14,
+    carb: 62,
+    washingLevel: 2,
+    difficulty: "かんたん",
+    tags: ["魚", "バランス", "定食"],
+    reason: "魚の良質な脂とたんぱく質を取りながら、定食スタイルで栄養を整えられます。",
+    ingredients: [
+      { ingredientId: "salmon", name: "鮭", amount: "1切れ" },
+      { ingredientId: "rice", name: "ごはん", amount: "180g" },
+      { ingredientId: "tofu", name: "豆腐", amount: "50g" },
+      { ingredientId: "wakame", name: "乾燥わかめ", amount: "2g" },
+      { ingredientId: "miso", name: "みそ", amount: "大さじ1" },
+    ],
+    steps: [
+      "鮭の水気をふき、フライパンまたはグリルで皮目から焼く。",
+      "鍋に水と豆腐、わかめを入れて温める。",
+      "火を止めてみそを溶き、みそ汁を仕上げる。",
+      "鮭、ごはん、みそ汁を盛り付ける。",
+    ],
+  },
+  {
+    id: "recipe-4",
+    name: "野菜たっぷりキーマカレー",
+    image: image("photo-1601050690597-df0568f70950"),
+    imageAlt: "野菜入りキーマカレー",
+    mealType: "dinner",
+    cookingTime: 30,
+    price: 330,
+    kcal: 620,
+    protein: 27,
+    fat: 18,
+    carb: 86,
+    washingLevel: 2,
+    difficulty: "ふつう",
+    tags: ["野菜", "作り置き", "満足感"],
+    reason: "細かく切った野菜を無理なく食べられ、翌日の昼食にも回せます。",
+    ingredients: [
+      { ingredientId: "ground-chicken", name: "鶏ひき肉", amount: "100g" },
+      { ingredientId: "onion", name: "玉ねぎ", amount: "1/2個" },
+      { ingredientId: "carrot", name: "にんじん", amount: "1/3本" },
+      { ingredientId: "tomato", name: "トマト", amount: "1個" },
+      { ingredientId: "curry-roux", name: "カレールウ", amount: "1かけ" },
+      { ingredientId: "rice", name: "ごはん", amount: "180g" },
+    ],
+    steps: [
+      "玉ねぎ、にんじん、トマトを細かく切る。",
+      "フライパンで鶏ひき肉と玉ねぎを炒める。",
+      "にんじん、トマト、水100mlを加えて8分煮る。",
+      "火を弱めてカレールウを溶かし、ごはんにかける。",
+    ],
+  },
+  {
+    id: "recipe-5",
+    name: "卵とツナの和風パスタ",
+    image: image("photo-1473093295043-cdd812d0e601"),
+    imageAlt: "卵とツナをのせた和風パスタ",
+    mealType: "lunch",
+    cookingTime: 15,
+    price: 220,
+    kcal: 590,
+    protein: 29,
+    fat: 17,
+    carb: 78,
+    washingLevel: 1,
+    difficulty: "かんたん",
+    tags: ["15分", "節約", "ストック食材"],
+    reason: "常備しやすい卵とツナを使い、忙しい昼でも15分で作れます。",
+    ingredients: [
+      { ingredientId: "pasta", name: "パスタ", amount: "100g" },
+      { ingredientId: "egg", name: "卵", amount: "1個" },
+      { ingredientId: "tuna", name: "ツナ", amount: "1缶" },
+      { ingredientId: "soy-sauce", name: "しょうゆ", amount: "小さじ2" },
+    ],
+    steps: [
+      "パスタを表示時間どおりにゆでる。",
+      "ボウルにツナ、しょうゆ、ゆで汁大さじ1を混ぜる。",
+      "ゆで上がったパスタを加えてあえる。",
+      "卵をのせ、食べる直前によく混ぜる。",
+    ],
+  },
+  {
+    id: "recipe-6",
+    name: "豚しゃぶサラダうどん",
+    image: image("photo-1618841557871-b4664fbf0cb3"),
+    imageAlt: "豚しゃぶと野菜をのせたうどん",
+    mealType: "lunch",
+    cookingTime: 15,
+    price: 320,
+    kcal: 520,
+    protein: 25,
+    fat: 15,
+    carb: 66,
+    washingLevel: 2,
+    difficulty: "かんたん",
+    tags: ["15分", "さっぱり", "野菜"],
+    reason: "食欲がない日も食べやすく、主食・肉・野菜を1皿にまとめられます。",
+    ingredients: [
+      { ingredientId: "pork", name: "豚しゃぶ肉", amount: "100g" },
+      { ingredientId: "udon", name: "うどん", amount: "1玉" },
+      { ingredientId: "cabbage", name: "キャベツ", amount: "2枚" },
+      { ingredientId: "tomato", name: "トマト", amount: "1/2個" },
+      { ingredientId: "ponzu", name: "ポン酢", amount: "大さじ2" },
+    ],
+    steps: [
+      "キャベツを千切り、トマトをくし切りにする。",
+      "鍋でうどんをゆで、同じ湯で豚肉にも火を通す。",
+      "うどんを冷水でしめ、水気を切る。",
+      "野菜と豚肉をのせ、ポン酢をかける。",
+    ],
+  },
+  {
+    id: "recipe-7",
+    name: "ささみとブロッコリーのサラダ",
+    image: image("photo-1546069901-ba9599a7e63c"),
+    imageAlt: "鶏ささみとブロッコリーのサラダ",
+    mealType: "dinner",
+    cookingTime: 15,
+    price: 300,
+    kcal: 360,
+    protein: 38,
+    fat: 13,
+    carb: 20,
+    washingLevel: 1,
+    difficulty: "かんたん",
+    tags: ["高たんぱく", "低脂質", "15分"],
+    reason: "鶏むね肉がないときも、たんぱく質量と調理時間をほぼ変えずに作れます。",
+    ingredients: [
+      { ingredientId: "chicken-tender", name: "ささみ", amount: "3本" },
+      { ingredientId: "broccoli", name: "ブロッコリー", amount: "1/2株" },
+      { ingredientId: "egg", name: "卵", amount: "1個" },
+      { ingredientId: "mayonnaise", name: "マヨネーズ", amount: "大さじ1" },
+      { ingredientId: "soy-sauce", name: "しょうゆ", amount: "小さじ1" },
+    ],
+    steps: [
+      "ささみの筋を取り、ブロッコリーを小房に分ける。",
+      "耐熱容器にささみとブロッコリーを入れ、電子レンジで加熱する。",
+      "ささみをほぐし、ゆで卵を食べやすく切る。",
+      "マヨネーズとしょうゆで全体をあえる。",
+    ],
+  },
+  {
+    id: "recipe-8",
+    name: "納豆卵ごはんセット",
+    image: image("photo-1539755530862-00f623c00f52"),
+    imageAlt: "納豆と卵を添えた朝ごはん",
+    mealType: "breakfast",
+    cookingTime: 5,
+    price: 160,
+    kcal: 455,
+    protein: 22,
+    fat: 13,
+    carb: 60,
+    washingLevel: 1,
+    difficulty: "とてもかんたん",
+    tags: ["5分", "朝食", "節約"],
+    reason: "調理をほぼせず、忙しい朝でも炭水化物とたんぱく質を補給できます。",
+    ingredients: [
+      { ingredientId: "rice", name: "ごはん", amount: "150g" },
+      { ingredientId: "natto", name: "納豆", amount: "1パック" },
+      { ingredientId: "egg", name: "卵", amount: "1個" },
+      { ingredientId: "soy-sauce", name: "しょうゆ", amount: "少々" },
+    ],
+    steps: [
+      "納豆を付属のたれと混ぜる。",
+      "温かいごはんに納豆と卵をのせる。",
+      "好みでしょうゆを少量かける。",
+    ],
+  },
+  {
+    id: "recipe-9",
+    name: "バナナヨーグルトオートミール",
+    image: image("photo-1488477181946-6428a0291777"),
+    imageAlt: "バナナ入りのヨーグルトオートミール",
+    mealType: "breakfast",
+    cookingTime: 5,
+    price: 180,
+    kcal: 390,
+    protein: 18,
+    fat: 9,
+    carb: 60,
+    washingLevel: 1,
+    difficulty: "とてもかんたん",
+    tags: ["5分", "食物繊維", "火を使わない"],
+    reason: "火を使わず準備でき、授業前でもさっと食べられます。",
+    ingredients: [
+      { ingredientId: "oats", name: "オートミール", amount: "40g" },
+      { ingredientId: "yogurt", name: "ヨーグルト", amount: "150g" },
+      { ingredientId: "banana", name: "バナナ", amount: "1本" },
+    ],
+    steps: [
+      "器にオートミールとヨーグルトを入れて混ぜる。",
+      "バナナを輪切りにしてのせる。",
+      "時間があれば3分ほど置いてなじませる。",
+    ],
+  },
+  {
+    id: "recipe-10",
+    name: "豆腐と野菜の具だくさんスープ",
+    image: image("photo-1547592180-85f173990554"),
+    imageAlt: "豆腐と野菜の温かいスープ",
+    mealType: "dinner",
+    cookingTime: 15,
+    price: 210,
+    kcal: 285,
+    protein: 18,
+    fat: 10,
+    carb: 30,
+    washingLevel: 1,
+    difficulty: "かんたん",
+    tags: ["野菜", "鍋1つ", "低脂質"],
+    reason: "冷蔵庫の余り野菜を使いやすく、鍋1つで片付けまで軽くできます。",
+    ingredients: [
+      { ingredientId: "tofu", name: "豆腐", amount: "150g" },
+      { ingredientId: "cabbage", name: "キャベツ", amount: "2枚" },
+      { ingredientId: "carrot", name: "にんじん", amount: "1/3本" },
+      { ingredientId: "onion", name: "玉ねぎ", amount: "1/4個" },
+      { ingredientId: "consomme", name: "コンソメ", amount: "小さじ1" },
+    ],
+    steps: [
+      "豆腐と野菜を食べやすい大きさに切る。",
+      "鍋に水300ml、野菜、コンソメを入れて8分煮る。",
+      "豆腐を加えてさらに2分温める。",
+      "好みでこしょうを振る。",
+    ],
+  },
+];
+
+export const ingredients = [
+  { id: "chicken-breast", name: "鶏むね肉", category: "肉・魚", unit: "g", kcalPer100g: 133, proteinPer100g: 24.4, priceEstimate: 88, alternatives: ["chicken-tender", "ground-chicken", "tofu"] },
+  { id: "chicken-tender", name: "ささみ", category: "肉・魚", unit: "g", kcalPer100g: 105, proteinPer100g: 23.9, priceEstimate: 102, alternatives: ["chicken-breast", "tuna", "tofu"] },
+  { id: "ground-chicken", name: "鶏ひき肉", category: "肉・魚", unit: "g", kcalPer100g: 171, proteinPer100g: 17.5, priceEstimate: 110, alternatives: ["chicken-breast", "tofu"] },
+  { id: "pork", name: "豚しゃぶ肉", category: "肉・魚", unit: "g", kcalPer100g: 216, proteinPer100g: 20.2, priceEstimate: 158, alternatives: ["chicken-breast", "chicken-tender"] },
+  { id: "salmon", name: "鮭", category: "肉・魚", unit: "切れ", kcalPer100g: 124, proteinPer100g: 22.3, priceEstimate: 230, alternatives: ["mackerel", "tuna", "chicken-breast"] },
+  { id: "mackerel", name: "サバ", category: "肉・魚", unit: "切れ", kcalPer100g: 211, proteinPer100g: 20.6, priceEstimate: 190, alternatives: ["salmon", "tuna"] },
+  { id: "tuna", name: "ツナ", category: "肉・魚", unit: "缶", kcalPer100g: 70, proteinPer100g: 16, priceEstimate: 130, alternatives: ["salmon", "chicken-tender"] },
+  { id: "tofu", name: "豆腐", category: "卵・大豆製品", unit: "丁", kcalPer100g: 73, proteinPer100g: 6.6, priceEstimate: 68, alternatives: ["ground-chicken", "egg"] },
+  { id: "egg", name: "卵", category: "卵・大豆製品", unit: "個", kcalPer100g: 142, proteinPer100g: 12.2, priceEstimate: 30, alternatives: ["tofu", "natto"] },
+  { id: "natto", name: "納豆", category: "卵・大豆製品", unit: "パック", kcalPer100g: 184, proteinPer100g: 16.5, priceEstimate: 38, alternatives: ["egg", "tofu"] },
+  { id: "cabbage", name: "キャベツ", category: "野菜", unit: "玉", kcalPer100g: 23, proteinPer100g: 1.3, priceEstimate: 198, alternatives: ["broccoli"] },
+  { id: "broccoli", name: "ブロッコリー", category: "野菜", unit: "株", kcalPer100g: 37, proteinPer100g: 5.4, priceEstimate: 198, alternatives: ["cabbage"] },
+  { id: "onion", name: "玉ねぎ", category: "野菜", unit: "個", kcalPer100g: 33, proteinPer100g: 1, priceEstimate: 58, alternatives: ["cabbage"] },
+  { id: "carrot", name: "にんじん", category: "野菜", unit: "本", kcalPer100g: 35, proteinPer100g: 0.7, priceEstimate: 58, alternatives: ["cabbage"] },
+  { id: "tomato", name: "トマト", category: "野菜", unit: "個", kcalPer100g: 20, proteinPer100g: 0.7, priceEstimate: 118, alternatives: ["cabbage"] },
+  { id: "banana", name: "バナナ", category: "野菜・果物", unit: "本", kcalPer100g: 93, proteinPer100g: 1.1, priceEstimate: 45, alternatives: [] },
+  { id: "wakame", name: "乾燥わかめ", category: "乾物", unit: "g", kcalPer100g: 164, proteinPer100g: 13.6, priceEstimate: 3, alternatives: ["cabbage"] },
+  { id: "rice", name: "ごはん", category: "主食", unit: "g", kcalPer100g: 156, proteinPer100g: 2.5, priceEstimate: 45, alternatives: ["udon", "pasta", "oats"] },
+  { id: "udon", name: "うどん", category: "主食", unit: "玉", kcalPer100g: 95, proteinPer100g: 2.6, priceEstimate: 45, alternatives: ["pasta", "rice"] },
+  { id: "pasta", name: "パスタ", category: "主食", unit: "g", kcalPer100g: 347, proteinPer100g: 12.9, priceEstimate: 60, alternatives: ["udon", "rice"] },
+  { id: "oats", name: "オートミール", category: "主食", unit: "g", kcalPer100g: 350, proteinPer100g: 13.7, priceEstimate: 45, alternatives: ["rice"] },
+  { id: "yogurt", name: "ヨーグルト", category: "乳製品", unit: "g", kcalPer100g: 56, proteinPer100g: 3.6, priceEstimate: 55, alternatives: ["tofu"] },
+  { id: "ponzu", name: "ポン酢", category: "調味料", unit: "ml", kcalPer100g: 47, proteinPer100g: 3.7, priceEstimate: 8, alternatives: ["soy-sauce"] },
+  { id: "soy-sauce", name: "しょうゆ", category: "調味料", unit: "ml", kcalPer100g: 76, proteinPer100g: 7.7, priceEstimate: 5, alternatives: ["ponzu"] },
+  { id: "oil", name: "サラダ油", category: "調味料", unit: "ml", kcalPer100g: 921, proteinPer100g: 0, priceEstimate: 3, alternatives: [] },
+  { id: "miso", name: "みそ", category: "調味料", unit: "g", kcalPer100g: 182, proteinPer100g: 12.5, priceEstimate: 12, alternatives: ["soy-sauce"] },
+  { id: "mayonnaise", name: "マヨネーズ", category: "調味料", unit: "g", kcalPer100g: 668, proteinPer100g: 1.4, priceEstimate: 12, alternatives: ["yogurt"] },
+  { id: "curry-roux", name: "カレールウ", category: "調味料", unit: "かけ", kcalPer100g: 474, proteinPer100g: 6.5, priceEstimate: 35, alternatives: [] },
+  { id: "potato-starch", name: "片栗粉", category: "調味料", unit: "g", kcalPer100g: 338, proteinPer100g: 0.1, priceEstimate: 3, alternatives: [] },
+  { id: "consomme", name: "コンソメ", category: "調味料", unit: "g", kcalPer100g: 235, proteinPer100g: 7, priceEstimate: 8, alternatives: ["miso"] },
+];
+
+const oneDayPlan = {
+  id: "plan-1-day",
+  label: "1日分の献立",
+  duration: 1,
+  estimatedPrice: 660,
+  summary: "時短と高たんぱくを両立した、忙しい日の献立です。",
+  days: [
+    {
+      day: 1,
+      label: "今日",
+      meals: { breakfast: "recipe-8", lunch: "recipe-5", dinner: "recipe-1" },
+    },
+  ],
+};
+
+const threeDayPlan = {
+  id: "plan-3-days",
+  label: "3日分の献立",
+  duration: 3,
+  estimatedPrice: 2280,
+  summary: "食材を使い回しながら、3日間で肉・魚・大豆をバランスよく取れます。",
+  days: [
+    { day: 1, label: "1日目", meals: { breakfast: "recipe-8", lunch: "recipe-5", dinner: "recipe-1" } },
+    { day: 2, label: "2日目", meals: { breakfast: "recipe-9", lunch: "recipe-2", dinner: "recipe-3" } },
+    { day: 3, label: "3日目", meals: { breakfast: "recipe-8", lunch: "recipe-6", dinner: "recipe-4" } },
+  ],
+};
+
+const reSuggestedPlan = {
+  id: "plan-re-suggested",
+  label: "鶏むね肉を使わない3日分",
+  duration: 3,
+  excludedIngredientIds: ["chicken-breast"],
+  estimatedPrice: 2320,
+  priceDifference: 40,
+  summary: "鶏むね肉を除外し、予算・たんぱく質・調理時間をなるべく維持しました。",
+  days: [
+    { day: 1, label: "1日目", meals: { breakfast: "recipe-8", lunch: "recipe-5", dinner: "recipe-7" } },
+    { day: 2, label: "2日目", meals: { breakfast: "recipe-9", lunch: "recipe-2", dinner: "recipe-3" } },
+    { day: 3, label: "3日目", meals: { breakfast: "recipe-8", lunch: "recipe-6", dinner: "recipe-10" } },
+  ],
+};
+
+export const mealPlans = {
+  oneDay: oneDayPlan,
+  threeDay: threeDayPlan,
+  reSuggested: reSuggestedPlan,
+};
+
+export const shoppingList = [
+  {
+    id: "meat-fish",
+    category: "肉・魚",
+    icon: "🐟",
+    items: [
+      { id: "shop-chicken-breast", ingredientId: "chicken-breast", name: "鶏むね肉", amount: 300, unit: "g", checked: false, estimatedPrice: 264, usedIn: ["1日目・夕食"], canBeUnavailable: true },
+      { id: "shop-ground-chicken", ingredientId: "ground-chicken", name: "鶏ひき肉", amount: 200, unit: "g", checked: false, estimatedPrice: 220, usedIn: ["2日目・昼食", "3日目・夕食"] },
+      { id: "shop-salmon", ingredientId: "salmon", name: "鮭", amount: 1, unit: "切れ", checked: false, estimatedPrice: 230, usedIn: ["2日目・夕食"], canBeUnavailable: true },
+      { id: "shop-pork", ingredientId: "pork", name: "豚しゃぶ肉", amount: 100, unit: "g", checked: false, estimatedPrice: 158, usedIn: ["3日目・昼食"] },
+      { id: "shop-tuna", ingredientId: "tuna", name: "ツナ", amount: 1, unit: "缶", checked: false, estimatedPrice: 130, usedIn: ["1日目・昼食"] },
+    ],
+  },
+  {
+    id: "vegetables",
+    category: "野菜",
+    icon: "🥬",
+    items: [
+      { id: "shop-cabbage", ingredientId: "cabbage", name: "キャベツ", amount: 0.5, unit: "玉", checked: false, estimatedPrice: 99, usedIn: ["1日目・夕食", "3日目・昼食"] },
+      { id: "shop-broccoli", ingredientId: "broccoli", name: "ブロッコリー", amount: 1, unit: "株", checked: false, estimatedPrice: 198, usedIn: ["代替献立" ] },
+      { id: "shop-onion", ingredientId: "onion", name: "玉ねぎ", amount: 2, unit: "個", checked: false, estimatedPrice: 116, usedIn: ["1日目・夕食", "3日目・夕食"] },
+      { id: "shop-carrot", ingredientId: "carrot", name: "にんじん", amount: 1, unit: "本", checked: false, estimatedPrice: 58, usedIn: ["3日目・夕食"] },
+      { id: "shop-tomato", ingredientId: "tomato", name: "トマト", amount: 2, unit: "個", checked: false, estimatedPrice: 236, usedIn: ["3日目・昼食", "3日目・夕食"] },
+      { id: "shop-banana", ingredientId: "banana", name: "バナナ", amount: 1, unit: "房", checked: false, estimatedPrice: 168, usedIn: ["2日目・朝食"] },
+    ],
+  },
+  {
+    id: "eggs-soy",
+    category: "卵・大豆製品",
+    icon: "🥚",
+    items: [
+      { id: "shop-egg", ingredientId: "egg", name: "卵", amount: 6, unit: "個", checked: false, estimatedPrice: 180, usedIn: ["1日目・朝食", "1日目・昼食", "3日目・朝食"] },
+      { id: "shop-tofu", ingredientId: "tofu", name: "豆腐", amount: 2, unit: "丁", checked: false, estimatedPrice: 136, usedIn: ["2日目・昼食", "2日目・夕食"] },
+      { id: "shop-natto", ingredientId: "natto", name: "納豆", amount: 2, unit: "パック", checked: false, estimatedPrice: 76, usedIn: ["1日目・朝食", "3日目・朝食"] },
+    ],
+  },
+  {
+    id: "staples",
+    category: "主食",
+    icon: "🍚",
+    items: [
+      { id: "shop-rice", ingredientId: "rice", name: "ごはん", amount: 900, unit: "g", checked: false, estimatedPrice: 270, usedIn: ["朝食・丼・定食"] },
+      { id: "shop-pasta", ingredientId: "pasta", name: "パスタ", amount: 100, unit: "g", checked: false, estimatedPrice: 60, usedIn: ["1日目・昼食"] },
+      { id: "shop-udon", ingredientId: "udon", name: "うどん", amount: 1, unit: "玉", checked: false, estimatedPrice: 45, usedIn: ["3日目・昼食"] },
+      { id: "shop-oats", ingredientId: "oats", name: "オートミール", amount: 40, unit: "g", checked: false, estimatedPrice: 45, usedIn: ["2日目・朝食"] },
+    ],
+  },
+  {
+    id: "seasonings",
+    category: "調味料",
+    icon: "🧂",
+    items: [
+      { id: "shop-ponzu", ingredientId: "ponzu", name: "ポン酢", amount: 1, unit: "本", checked: false, estimatedPrice: 198, usedIn: ["1日目・夕食", "3日目・昼食"] },
+      { id: "shop-soy", ingredientId: "soy-sauce", name: "しょうゆ", amount: 1, unit: "本", checked: false, estimatedPrice: 198, usedIn: ["複数の献立"] },
+      { id: "shop-oil", ingredientId: "oil", name: "サラダ油", amount: 1, unit: "本", checked: false, estimatedPrice: 238, usedIn: ["炒め物"] },
+      { id: "shop-miso", ingredientId: "miso", name: "みそ", amount: 1, unit: "パック", checked: false, estimatedPrice: 248, usedIn: ["2日目・夕食"] },
+      { id: "shop-curry", ingredientId: "curry-roux", name: "カレールウ", amount: 1, unit: "箱", checked: false, estimatedPrice: 228, usedIn: ["3日目・夕食"] },
+    ],
+  },
+];
+
+export const substitutions = [
+  {
+    ingredientId: "chicken-breast",
+    ingredientName: "鶏むね肉",
+    reason: "高たんぱく・低脂質・15分以内という元の条件を優先しました。",
+    message: "高たんぱく・低脂質・15分以内という元の条件を優先しました。",
+    candidates: [
+      { ingredientId: "chicken-tender", name: "ささみ", priceDelta: 20, kcalImpact: "少し減少", kcalEffect: "少し減少", proteinImpact: "ほぼ同じ", proteinEffect: "ほぼ同じ", cookingTimeImpact: "変化なし", cookingTimeEffect: "変化なし", note: "食感も近く、そのまま置き換えやすいです。", recommended: true },
+      { ingredientId: "ground-chicken", name: "鶏ひき肉", priceDelta: 10, kcalImpact: "少し増加", kcalEffect: "少し増加", proteinImpact: "ほぼ同じ", proteinEffect: "ほぼ同じ", cookingTimeImpact: "約3分短縮", cookingTimeEffect: "約3分短縮", note: "切る手間がなく、そぼろ風に作れます。", recommended: false },
+      { ingredientId: "tofu", name: "豆腐", priceDelta: -80, kcalImpact: "減少", kcalEffect: "減少", proteinImpact: "やや減少", proteinEffect: "やや減少", cookingTimeImpact: "約5分短縮", cookingTimeEffect: "約5分短縮", note: "予算を抑えたいとき向けです。", recommended: false },
+    ],
+  },
+  {
+    ingredientId: "salmon",
+    ingredientName: "鮭",
+    reason: "魚料理の手軽さを保ちながら、価格とたんぱく質を比較できます。",
+    message: "魚料理の手軽さを保ちながら、価格とたんぱく質を比較できます。",
+    candidates: [
+      { ingredientId: "mackerel", name: "サバ", priceDelta: -40, kcalImpact: "少し増加", kcalEffect: "少し増加", proteinImpact: "ほぼ同じ", proteinEffect: "ほぼ同じ", cookingTimeImpact: "変化なし", cookingTimeEffect: "変化なし", note: "脂が多く、満足感があります。", recommended: true },
+      { ingredientId: "tuna", name: "ツナ", priceDelta: -100, kcalImpact: "減少", kcalEffect: "減少", proteinImpact: "やや減少", proteinEffect: "やや減少", cookingTimeImpact: "約10分短縮", cookingTimeEffect: "約10分短縮", note: "加熱せず使えるため時短になります。", recommended: false },
+      { ingredientId: "chicken-breast", name: "鶏むね肉", priceDelta: -120, kcalImpact: "ほぼ同じ", kcalEffect: "ほぼ同じ", proteinImpact: "少し増加", proteinEffect: "少し増加", cookingTimeImpact: "変化なし", cookingTimeEffect: "変化なし", note: "魚にこだわらず予算を優先するとき向けです。", recommended: false },
+    ],
+  },
+];
+
+export const unavailableIngredientScenario = {
+  ingredientId: "chicken-breast",
+  ingredientName: "鶏むね肉",
+  usedIn: ["1日目の夕食「鶏むね肉のポン酢炒め」"],
+  reasonOptions: ["売り切れていた", "予算より高かった", "品質がよくなかった"],
+  message: "条件に近い代替食材を探すか、鶏むね肉を使わない献立に作り直せます。",
+  actions: [
+    { id: "substitute", label: "代替食材を提案", description: "予算・栄養・時間をなるべく維持" },
+    { id: "replan", label: "献立を再作成", description: "この食材を除外して別の献立を表示" },
+  ],
+};
+
+export const receiptItems = [
+  { id: "receipt-1", ingredientId: "chicken-breast", name: "鶏むね肉", quantity: "1パック", category: "肉・魚", confidence: 98 },
+  { id: "receipt-2", ingredientId: "egg", name: "卵", quantity: "6個", category: "卵・大豆製品", confidence: 96 },
+  { id: "receipt-3", ingredientId: "cabbage", name: "キャベツ", quantity: "1/2玉", category: "野菜", confidence: 94 },
+  { id: "receipt-4", ingredientId: "tofu", name: "豆腐", quantity: "1丁", category: "卵・大豆製品", confidence: 97 },
+];
+
+export const setupOptions = {
+  genders: ["回答しない", "女性", "男性", "その他"],
+  allergies: ["卵", "乳", "小麦", "えび", "かに", "そば", "落花生"],
+  dislikes: ["魚", "きのこ", "トマト", "ピーマン", "辛い料理"],
+  mealGoals: [
+    { id: "health", label: "健康", icon: "🌿", description: "バランスよく食べたい" },
+    { id: "saving", label: "節約", icon: "👛", description: "食費を抑えたい" },
+    { id: "training", label: "筋トレ", icon: "💪", description: "たんぱく質を取りたい" },
+    { id: "quick", label: "時短", icon: "⏱️", description: "手早く作りたい" },
+    { id: "diet", label: "ダイエット", icon: "⚖️", description: "摂取量を整えたい" },
+  ],
+  fridgeSuggestions: ["卵", "豆腐", "キャベツ", "ごはん", "納豆", "ツナ"],
+  monthlyBudgets: [15000, 20000, 25000, 30000],
+  tastePreferences: ["やさしい味", "濃いめ", "さっぱり", "こってり", "辛め"],
+};
+
+export const conditionOptions = {
+  durations: [
+    { value: 1, label: "1日" },
+    { value: 3, label: "3日" },
+    { value: 7, label: "1週間" },
+  ],
+  nutrients: ["たんぱく質", "野菜", "低脂質", "炭水化物", "バランス"],
+  cookingTimes: [15, 30, 45],
+  cookingConditions: ["時間を短くしたい", "洗い物を減らしたい", "簡単な料理にしたい", "冷蔵庫の食材を使いたい"],
+  exercises: ["運動なし", "筋トレ", "有酸素運動", "部活動", "軽い運動"],
+  budgetPresets: [700, 1500, 2500, 3500],
+};
+
+conditionOptions.days = conditionOptions.durations;
+conditionOptions.constraints = conditionOptions.cookingConditions;
+
+export const feedbackOptions = [
+  { id: "too-light", label: "味が薄かった", category: "taste" },
+  { id: "prefer-strong", label: "もう少し濃い味が良い", category: "taste" },
+  { id: "prefer-light", label: "さっぱりした料理が良い", category: "taste" },
+  { id: "cook-again", label: "また作りたい", category: "favorite" },
+  { id: "too-much-work", label: "調理の手間が多かった", category: "effort" },
+  { id: "too-many-dishes", label: "洗い物が多かった", category: "effort" },
+];
+
+export const bottomNavItems = [
+  { id: "home", label: "ホーム", icon: "⌂" },
+  { id: "create", label: "献立作成", icon: "＋" },
+  { id: "shopping", label: "買い物", icon: "🛒" },
+  { id: "recipes", label: "レシピ", icon: "▤" },
+  { id: "settings", label: "設定", icon: "⚙" },
+];
+
+export const recipeMap = Object.fromEntries(recipes.map((recipe) => [recipe.id, recipe]));
+export const ingredientMap = Object.fromEntries(ingredients.map((ingredient) => [ingredient.id, ingredient]));
+export const substitutionsByIngredient = Object.fromEntries(
+  substitutions.map((substitution) => [substitution.ingredientId, substitution]),
+);
+
+export const getRecipeById = (id) => recipeMap[id] ?? null;
+export const getIngredientById = (id) => ingredientMap[id] ?? null;
+export const getMealPlan = (duration = 1) => (Number(duration) === 1 ? mealPlans.oneDay : mealPlans.threeDay);
+export const getSubstitutionsFor = (ingredientId) => substitutionsByIngredient[ingredientId]?.candidates ?? [];
+
+export default {
+  recipes,
+  ingredients,
+  mealPlans,
+  shoppingList,
+  substitutions,
+  receiptItems,
+  setupOptions,
+  conditionOptions,
+  feedbackOptions,
+};
