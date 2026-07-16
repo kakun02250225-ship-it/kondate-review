@@ -851,6 +851,12 @@ export default function MealMateApp() {
   const submitFeedback = () => {
     setFeedbackSubmitted(true);
     setPersonalizationApplied(true);
+    setActivePlan(null);
+    setPlanConfirmed(false);
+    setCheckedItems({});
+    setIngredientReplacements({});
+    setConfirmedCookingRecipe(null);
+    setCookingStep(0);
     moveTo("mealSuggestion", "フィードバックを保存して、ホームに戻りました");
   };
 
