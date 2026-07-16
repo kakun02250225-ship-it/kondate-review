@@ -26,6 +26,7 @@ export default function MealChange({
   candidates,
   candidateRecipeIds,
   excludedIngredientIds = [],
+  maxCookTime,
   selectedRecipeId,
   onSelectRecipe,
   onSelect,
@@ -43,7 +44,19 @@ export default function MealChange({
             && supportsMealType(recipe, editingSlot?.mealType)
             && !usesExcludedIngredient(recipe, excludedIngredientIds),
         )
-  ).filter((recipe) => !usesExcludedIngredient(recipe, excludedIngredientIds)).slice(0, 5);
+  )
+    .filter((recipe) => !usesExcludedIngredient(recipe, excludedIngredientIds))
+    .sort((a, b) => {
+      const timeLimit = Number(maxCookTime ?? 0);
+      const aFits = !timeLimit || Number(a.cookingTime ?? 0) <= timeLimit;
+      const bFits = !timeLimit || Number(b.cookingTime ?? 0) <= timeLimit;
+      if (aFits !== bFits) return aFits ? -1 : 1;
+      if (Number(a.cookingTime ?? 0) !== Number(b.cookingTime ?? 0)) {
+        return Number(a.cookingTime ?? 0) - Number(b.cookingTime ?? 0);
+      }
+      return Number(a.washingLevel ?? 3) - Number(b.washingLevel ?? 3);
+    })
+    .slice(0, 5);
   const selectRecipe = onSelectRecipe ?? onSelect;
 
   return (

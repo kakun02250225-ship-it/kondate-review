@@ -64,8 +64,8 @@ const cleanMealLabels = {
 
 const planRecipes = {
   breakfast: ["recipe-8", "recipe-9"],
-  lunch: ["recipe-5", "recipe-2", "recipe-6"],
-  dinner: ["recipe-1", "recipe-3", "recipe-4"],
+  lunch: ["recipe-11", "recipe-5", "recipe-12", "recipe-2", "recipe-6"],
+  dinner: ["recipe-14", "recipe-1", "recipe-13", "recipe-10", "recipe-3", "recipe-4"],
 };
 
 const allergyIngredientIds = [
@@ -128,38 +128,57 @@ function supportsMealType(recipe, mealType) {
   return types.includes(mealType);
 }
 
-function safeRecipeFor(mealType, blockedIngredientIds, preferredIds = [], maxCookTime) {
-  const fitsTime = (recipe) => !maxCookTime || Number(recipe?.cookingTime ?? 0) <= Number(maxCookTime);
-  const preferredRecipe = preferredIds
-    .map((id) => recipes.find((recipe) => recipe.id === id))
-    .find((recipe) => (
-      recipe
-      && supportsMealType(recipe, mealType)
-      && !recipeHasIngredients(recipe, blockedIngredientIds)
-      && fitsTime(recipe)
-    ));
-  if (preferredRecipe) return preferredRecipe.id;
+function scoreRecipe(recipe, conditions = {}, preferredIds = []) {
+  const maxCookTime = Number(conditions?.cookTime ?? 0);
+  const budget = Number(conditions?.budget ?? 0);
+  const preferredIndex = preferredIds.indexOf(recipe.id);
+  let score = 0;
 
-  return recipes.find((recipe) => (
-    supportsMealType(recipe, mealType)
-    && !recipeHasIngredients(recipe, blockedIngredientIds)
-    && fitsTime(recipe)
-  ))?.id ?? recipes.find((recipe) => (
-    supportsMealType(recipe, mealType)
-    && !recipeHasIngredients(recipe, blockedIngredientIds)
-  ))?.id ?? preferredIds[0] ?? recipes[0]?.id;
+  if (preferredIndex >= 0) score += Math.max(0, 18 - preferredIndex * 2);
+  if (maxCookTime) {
+    score += Number(recipe.cookingTime ?? 0) <= maxCookTime ? 40 : -40;
+    score += Math.max(-12, maxCookTime - Number(recipe.cookingTime ?? 0));
+  }
+  if (budget) {
+    const perMealBudget = budget / 3;
+    score += Number(recipe.price ?? 0) <= perMealBudget ? 12 : -8;
+  }
+  score += Math.max(0, 5 - Number(recipe.washingLevel ?? 3)) * 3;
+  score += Math.min(10, Number(recipe.protein ?? 0) / 4);
+  if ((recipe.tags ?? []).some((tag) => String(tag).includes("麺"))) score += 4;
+  return score;
+}
+
+function rankedRecipesFor(mealType, blockedIngredientIds, conditions = {}, preferredIds = []) {
+  return recipes
+    .filter((recipe) => (
+      supportsMealType(recipe, mealType)
+      && !recipeHasIngredients(recipe, blockedIngredientIds)
+    ))
+    .sort((a, b) => scoreRecipe(b, conditions, preferredIds) - scoreRecipe(a, conditions, preferredIds));
+}
+
+function safeRecipeFor(mealType, blockedIngredientIds, preferredIds = [], conditions = {}) {
+  const maxCookTime = Number(conditions?.cookTime ?? 0);
+  const fitsTime = (recipe) => !maxCookTime || Number(recipe?.cookingTime ?? 0) <= Number(maxCookTime);
+  const ranked = rankedRecipesFor(mealType, blockedIngredientIds, conditions, preferredIds);
+  return ranked.find(fitsTime)?.id ?? ranked[0]?.id ?? preferredIds[0] ?? recipes[0]?.id;
 }
 
 function applyPlanRules(plan, blockedIngredientIds, conditions) {
   if (!plan) return plan;
   const nextPlan = clone(plan);
-  daysFromPlan(nextPlan).forEach((day) => {
+  daysFromPlan(nextPlan).forEach((day, dayIndex) => {
     Object.entries(day?.meals ?? {}).forEach(([mealType, recipeId]) => {
       const recipe = recipes.find((item) => item.id === recipeId);
+      const ranked = rankedRecipesFor(mealType, blockedIngredientIds, conditions, planRecipes[mealType]);
+      const bestRecipe = ranked[dayIndex % Math.max(ranked.length, 1)] ?? ranked[0];
       const shouldReplace = recipeHasIngredients(recipe, blockedIngredientIds)
         || (conditions?.cookTime && Number(recipe?.cookingTime ?? 0) > Number(conditions.cookTime));
-      if (!shouldReplace) return;
-      day.meals[mealType] = safeRecipeFor(mealType, blockedIngredientIds, planRecipes[mealType], conditions?.cookTime);
+      const betterRecipe = bestRecipe && recipe
+        && scoreRecipe(bestRecipe, conditions, planRecipes[mealType]) > scoreRecipe(recipe, conditions, planRecipes[mealType]) + 6;
+      if (!shouldReplace && !betterRecipe) return;
+      day.meals[mealType] = bestRecipe?.id ?? safeRecipeFor(mealType, blockedIngredientIds, planRecipes[mealType], conditions);
     });
   });
   const allergyNames = blockedIngredientIds
@@ -194,7 +213,7 @@ function buildPlan(conditions, profile) {
   const blockedIngredientIds = normaliseIngredientIds(profile?.allergies);
 
   if (duration === "meal") {
-    const recipeId = safeRecipeFor(mealType, blockedIngredientIds, planRecipes[mealType] ?? planRecipes.dinner, conditions?.cookTime);
+    const recipeId = safeRecipeFor(mealType, blockedIngredientIds, planRecipes[mealType] ?? planRecipes.dinner, conditions);
     return applyPlanRules({
       id: `plan-one-${mealType}`,
       label: `1食分（${cleanMealLabels[mealType]}）`,
@@ -744,6 +763,7 @@ export default function MealMateApp() {
             currentRecipeId={editingSlot?.recipeId}
             editingSlot={editingSlot}
             excludedIngredientIds={normaliseIngredientIds(profile.allergies)}
+            maxCookTime={conditions.cookTime}
             selectedRecipeId={editingSlot?.recipeId}
             onSelectRecipe={replaceMeal}
             onBack={() => moveTo("mealSuggestion")}
@@ -759,7 +779,9 @@ export default function MealMateApp() {
             checkedItems={checkedItems}
             onToggleItem={toggleShoppingItem}
             onUnavailableIngredient={(id) => {
-              setUnavailableIngredientId(id ?? shoppingUnavailableIngredientId);
+              const nextId = id ?? shoppingUnavailableIngredientId;
+              setUnavailableIngredientId(nextId);
+              setSelectedSubstituteId(ingredientMap[nextId]?.alternatives?.[0] ?? "");
               moveTo("unavailableIngredient");
             }}
             onReceiptScan={() => moveTo("receiptScan")}

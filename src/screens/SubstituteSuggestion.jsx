@@ -51,8 +51,13 @@ export default function SubstituteSuggestion({
   const originalId = originalIngredientId ?? ingredientId ?? "chicken-breast";
   const entry = substitutionFor(substitutions, originalId) ?? {};
   const originalIngredient = ingredientById(originalId) ?? entry.original ?? {};
+  const fallbackCandidates = (originalIngredient.alternatives ?? []).map((id, index) => ({
+    ingredientId: id,
+    recommended: index === 0,
+    note: "食材DBに登録されている代替候補です。元の料理に近い使い方で置き換えます。",
+  }));
   const candidateList =
-    candidates ?? entry.candidates ?? entry.alternatives ?? entry.substitutes ?? [];
+    candidates ?? entry.candidates ?? entry.alternatives ?? entry.substitutes ?? fallbackCandidates;
   const effectiveSelectedId = selectedSubstituteId ?? selectedId ?? candidateId(candidateList[0]);
   const selectSubstitute = onSelectSubstitute ?? onSelect;
   const confirmSubstitute = onConfirmSubstitute ?? onConfirm;
