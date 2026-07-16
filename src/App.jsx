@@ -128,39 +128,50 @@ function supportsMealType(recipe, mealType) {
   return types.includes(mealType);
 }
 
-function safeRecipeFor(mealType, blockedIngredientIds, preferredIds = []) {
+function safeRecipeFor(mealType, blockedIngredientIds, preferredIds = [], maxCookTime) {
+  const fitsTime = (recipe) => !maxCookTime || Number(recipe?.cookingTime ?? 0) <= Number(maxCookTime);
   const preferredRecipe = preferredIds
     .map((id) => recipes.find((recipe) => recipe.id === id))
     .find((recipe) => (
       recipe
       && supportsMealType(recipe, mealType)
       && !recipeHasIngredients(recipe, blockedIngredientIds)
+      && fitsTime(recipe)
     ));
   if (preferredRecipe) return preferredRecipe.id;
 
   return recipes.find((recipe) => (
     supportsMealType(recipe, mealType)
     && !recipeHasIngredients(recipe, blockedIngredientIds)
+    && fitsTime(recipe)
+  ))?.id ?? recipes.find((recipe) => (
+    supportsMealType(recipe, mealType)
+    && !recipeHasIngredients(recipe, blockedIngredientIds)
   ))?.id ?? preferredIds[0] ?? recipes[0]?.id;
 }
 
-function applyAllergyExclusions(plan, blockedIngredientIds) {
-  if (!plan || blockedIngredientIds.length === 0) return plan;
+function applyPlanRules(plan, blockedIngredientIds, conditions) {
+  if (!plan) return plan;
   const nextPlan = clone(plan);
   daysFromPlan(nextPlan).forEach((day) => {
     Object.entries(day?.meals ?? {}).forEach(([mealType, recipeId]) => {
       const recipe = recipes.find((item) => item.id === recipeId);
-      if (!recipeHasIngredients(recipe, blockedIngredientIds)) return;
-      day.meals[mealType] = safeRecipeFor(mealType, blockedIngredientIds, planRecipes[mealType]);
+      const shouldReplace = recipeHasIngredients(recipe, blockedIngredientIds)
+        || (conditions?.cookTime && Number(recipe?.cookingTime ?? 0) > Number(conditions.cookTime));
+      if (!shouldReplace) return;
+      day.meals[mealType] = safeRecipeFor(mealType, blockedIngredientIds, planRecipes[mealType], conditions?.cookTime);
     });
   });
   const allergyNames = blockedIngredientIds
     .map((id) => ingredients.find((ingredient) => ingredient.id === id)?.name)
     .filter(Boolean);
   nextPlan.excludedAllergyIngredientIds = blockedIngredientIds;
-  nextPlan.allergyNote = allergyNames.length
-    ? `アレルギー食材（${allergyNames.join("、")}）を含む料理は外しています。`
-    : "アレルギー食材を含む料理は外しています。";
+  if (allergyNames.length) {
+    nextPlan.allergyNote = `アレルギー食材（${allergyNames.join("、")}）を含む料理は外しています。`;
+  }
+  if (conditions?.cookTime) {
+    nextPlan.timeNote = `調理時間は${conditions.cookTime}分以内を優先しています。`;
+  }
   return nextPlan;
 }
 
@@ -183,8 +194,8 @@ function buildPlan(conditions, profile) {
   const blockedIngredientIds = normaliseIngredientIds(profile?.allergies);
 
   if (duration === "meal") {
-    const recipeId = safeRecipeFor(mealType, blockedIngredientIds, planRecipes[mealType] ?? planRecipes.dinner);
-    return applyAllergyExclusions({
+    const recipeId = safeRecipeFor(mealType, blockedIngredientIds, planRecipes[mealType] ?? planRecipes.dinner, conditions?.cookTime);
+    return applyPlanRules({
       id: `plan-one-${mealType}`,
       label: `1食分（${cleanMealLabels[mealType]}）`,
       title: `${cleanMealLabels[mealType]}の献立`,
@@ -198,21 +209,21 @@ function buildPlan(conditions, profile) {
           meals: { [mealType]: recipeId },
         },
       ],
-    }, blockedIngredientIds);
+    }, blockedIngredientIds, conditions);
   }
 
   if (duration === "1day" || Number(conditions?.days) === 1) {
-    return applyAllergyExclusions({
+    return applyPlanRules({
       ...clone(mealPlans.oneDay),
       title: "1日分の献立",
       label: "1日分",
       mealSlots: ["breakfast", "lunch", "dinner"],
-    }, blockedIngredientIds);
+    }, blockedIngredientIds, conditions);
   }
 
   if (duration === "7days" || Number(conditions?.days) === 7) {
     const baseDays = daysFromPlan(mealPlans.threeDay);
-    return applyAllergyExclusions({
+    return applyPlanRules({
       ...clone(mealPlans.threeDay),
       id: "plan-7-days",
       title: "1週間分の献立",
@@ -228,15 +239,15 @@ function buildPlan(conditions, profile) {
           label: `${index + 1}日目`,
         };
       }),
-    }, blockedIngredientIds);
+    }, blockedIngredientIds, conditions);
   }
 
-  return applyAllergyExclusions({
+  return applyPlanRules({
     ...clone(mealPlans.threeDay),
     title: "3日分の献立",
     label: "3日分",
     mealSlots: ["breakfast", "lunch", "dinner"],
-  }, blockedIngredientIds);
+  }, blockedIngredientIds, conditions);
 }
 
 function navIdForScreen(screen) {
@@ -302,6 +313,7 @@ export default function MealMateApp() {
   const [cookingStep, setCookingStep] = useState(0);
   const [servings, setServings] = useState(1);
   const [tasteNote, setTasteNote] = useState("");
+  const [confirmedCookingRecipe, setConfirmedCookingRecipe] = useState(null);
   const [selectedFeedback, setSelectedFeedback] = useState([]);
   const [feedbackNote, setFeedbackNote] = useState("");
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
@@ -394,7 +406,7 @@ export default function MealMateApp() {
         amount: base.amount ?? details.amount,
         unit: base.unit ?? "",
         usedIn: [...details.usedIn],
-        canBeUnavailable: base.canBeUnavailable ?? ["chicken-breast", "salmon"].includes(originalId),
+        canBeUnavailable: base.canBeUnavailable ?? category !== "調味料",
         substitutedFrom: replacementId !== originalId ? (original?.name ?? details.name) : undefined,
       });
     });
@@ -487,6 +499,7 @@ export default function MealMateApp() {
     setCheckedItems({});
     setIngredientReplacements({});
     setSelectedRecipeId(firstRecipeId(clonedPlan));
+    setConfirmedCookingRecipe(null);
     moveTo("mealSuggestion");
   };
 
@@ -501,6 +514,7 @@ export default function MealMateApp() {
       return nextPlan;
     });
     setSelectedRecipeId(recipeId);
+    setConfirmedCookingRecipe(null);
     setEditingSlot(null);
     moveTo("mealSuggestion", "夕食メニューを変更しました");
   };
@@ -526,6 +540,7 @@ export default function MealMateApp() {
     const nextPlan = clone(reSuggestedPlan ?? mealPlans.threeDay ?? mealPlans.oneDay);
     setActivePlan(nextPlan);
     setSelectedRecipeId(firstRecipeId(nextPlan));
+    setConfirmedCookingRecipe(null);
     setIngredientReplacements((previous) => {
       const next = { ...previous };
       delete next[unavailableIngredientId];
@@ -810,7 +825,8 @@ export default function MealMateApp() {
             tasteNote={tasteNote}
             onServingsChange={setServings}
             onTasteNoteChange={setTasteNote}
-            onStart={() => {
+            onStart={(payload) => {
+              setConfirmedCookingRecipe(payload?.recipe ?? cookingRecipe);
               setCookingStep(0);
               moveTo("cooking");
             }}
@@ -820,7 +836,7 @@ export default function MealMateApp() {
       case "cooking":
         return (
           <Cooking
-            recipe={cookingRecipe}
+            recipe={confirmedCookingRecipe ?? cookingRecipe}
             currentStep={cookingStep}
             tasteNote={tasteNote}
             onNext={setCookingStep}

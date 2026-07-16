@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { recipes } from '../data';
+import { ingredients, recipes } from '../data';
 import Header from '../components/Header';
 import IngredientList from '../components/IngredientList';
 
@@ -14,6 +14,36 @@ function isImageSource(value) {
 function preferenceLabel(value, labels) {
   const index = Math.min(labels.length - 1, Math.max(0, Number(value) - 1));
   return labels[index];
+}
+
+const seasoningIds = ['ponzu', 'soy-sauce', 'miso', 'consomme', 'curry-roux'];
+const richnessIds = ['oil', 'mayonnaise'];
+const tasteFactors = { 1: 0.7, 2: 0.85, 3: 1, 4: 1.15, 5: 1.3 };
+
+function scaleAmountText(amount, factor) {
+  if (!amount || factor === 1 || typeof amount !== 'string') return amount;
+  return amount.replace(/\d+(?:\.\d+)?/, (value) => {
+    const next = Math.round(Number(value) * factor * 10) / 10;
+    return Number.isInteger(next) ? String(next) : String(next);
+  });
+}
+
+function adjustIngredientsForTaste(recipe, saltiness, richness) {
+  const ingredientMap = new Map(ingredients.map((ingredient) => [ingredient.id, ingredient]));
+  return (recipe?.ingredients ?? []).map((item) => {
+    const factor = seasoningIds.includes(item.ingredientId)
+      ? tasteFactors[saltiness]
+      : richnessIds.includes(item.ingredientId)
+        ? tasteFactors[richness]
+        : 1;
+    if (factor === 1) return item;
+    return {
+      ...item,
+      amount: scaleAmountText(item.amount, factor),
+      category: ingredientMap.get(item.ingredientId)?.category,
+      tasteAdjusted: true,
+    };
+  });
 }
 
 export default function RecipeConfirm({
@@ -34,6 +64,8 @@ export default function RecipeConfirm({
   const displayedServings = servings ?? localServings;
   const displayedTasteNote = tasteNote ?? localTasteNote;
   const steps = (recipe?.steps ?? []).map(stepLabel).filter(Boolean);
+  const adjustedIngredients = adjustIngredientsForTaste(recipe, saltiness, richness);
+  const adjustedRecipe = { ...recipe, ingredients: adjustedIngredients };
   const saltLabel = preferenceLabel(saltiness, ['薄味', 'やや薄味', 'ふつう', 'やや濃い味', '濃い味']);
   const richnessLabel = preferenceLabel(richness, ['さっぱり', 'ややさっぱり', 'ふつう', 'ややこってり', 'こってり']);
   const tasteSummary = [
@@ -126,7 +158,12 @@ export default function RecipeConfirm({
               <h2 id="ingredients-title">{displayedServings}人分の材料</h2>
             </div>
           </div>
-          <IngredientList ingredients={recipe.ingredients ?? []} servings={displayedServings} />
+          <IngredientList ingredients={adjustedIngredients} servings={displayedServings} />
+          {(saltiness !== 3 || richness !== 3) && (
+            <p className="form-help">
+              味スライダーに合わせて、ポン酢・しょうゆ・みそ・油・マヨネーズなどの調味料だけを割合変更しています。
+            </p>
+          )}
         </section>
 
         <section className="info-card" aria-labelledby="steps-title">
@@ -211,7 +248,7 @@ export default function RecipeConfirm({
           <button
             className="button button--primary button--large button--full primary-button full-width"
             type="button"
-            onClick={() => onStart?.({ recipe, servings: displayedServings, tasteNote: tasteSummary })}
+            onClick={() => onStart?.({ recipe: adjustedRecipe, servings: displayedServings, tasteNote: tasteSummary })}
           >
             調理を開始
           </button>

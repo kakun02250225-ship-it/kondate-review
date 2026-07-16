@@ -97,6 +97,7 @@ export default function ShoppingList({
               checked={checkedItems}
               checkedItems={checkedItems}
               groups={visibleGroups}
+              onUnavailable={(item) => onUnavailableIngredient?.(item.ingredientId)}
               onToggle={toggleItem}
               onToggleItem={toggleItem}
             />
@@ -106,7 +107,8 @@ export default function ShoppingList({
               <div>
                 <h2>買えない食材があったら</h2>
                 <p>
-                  似た食材への置き換え、またはその食材を使わない献立への組み直しを試せます。
+                  主食・肉魚・野菜など、買えなかった食材の行から個別に選べます。
+                  調味料は家にある前提なので対象外にしています。
                 </p>
                 <button
                   className="button button--outline button--full"

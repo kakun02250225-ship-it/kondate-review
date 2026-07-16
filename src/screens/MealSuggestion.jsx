@@ -101,6 +101,13 @@ export default function MealSuggestion({
               </div>
             )}
 
+            {selectedPlan.timeNote && (
+              <div className="info-card">
+                <span className="info-card__icon" aria-hidden="true">⏱</span>
+                <p>{selectedPlan.timeNote}</p>
+              </div>
+            )}
+
             <div className="meal-plan-days">
               {schedule.map((day, dayIndex) => (
                 <section className="meal-day" key={day.id ?? day.date ?? day.label ?? dayIndex}>
