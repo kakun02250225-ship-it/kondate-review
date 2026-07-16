@@ -11,9 +11,14 @@ function isImageSource(value) {
   return typeof value === 'string' && /^(https?:|data:|\/)/.test(value);
 }
 
+function preferenceLabel(value, labels) {
+  const index = Math.min(labels.length - 1, Math.max(0, Number(value) - 1));
+  return labels[index];
+}
+
 export default function RecipeConfirm({
   recipe = recipes?.[0],
-  dateLabel = '7月17日（木）',
+  dateLabel = '今日',
   mealType = '夕食',
   servings,
   tasteNote,
@@ -23,10 +28,19 @@ export default function RecipeConfirm({
   onBack,
 }) {
   const [localServings, setLocalServings] = useState(2);
+  const [saltiness, setSaltiness] = useState(3);
+  const [richness, setRichness] = useState(3);
   const [localTasteNote, setLocalTasteNote] = useState('');
   const displayedServings = servings ?? localServings;
   const displayedTasteNote = tasteNote ?? localTasteNote;
   const steps = (recipe?.steps ?? []).map(stepLabel).filter(Boolean);
+  const saltLabel = preferenceLabel(saltiness, ['薄味', 'やや薄味', 'ふつう', 'やや濃い味', '濃い味']);
+  const richnessLabel = preferenceLabel(richness, ['さっぱり', 'ややさっぱり', 'ふつう', 'ややこってり', 'こってり']);
+  const tasteSummary = [
+    `味の濃さ：${saltLabel}`,
+    `こってり感：${richnessLabel}`,
+    displayedTasteNote.trim() ? `メモ：${displayedTasteNote.trim()}` : '',
+  ].filter(Boolean).join(' / ');
 
   const changeServings = (nextValue) => {
     const next = Math.min(6, Math.max(1, nextValue));
@@ -70,7 +84,7 @@ export default function RecipeConfirm({
             <div className="recipe-meta" aria-label="レシピ情報">
               <span>⏱ {recipe.cookingTime ?? 30}分</span>
               <span>¥{Number(recipe.price ?? 0).toLocaleString('ja-JP')}</span>
-              <span>{recipe.kcal ?? '—'} kcal</span>
+              <span>{recipe.kcal ?? '-'} kcal</span>
             </div>
             {recipe.reason && <p className="recipe-reason">{recipe.reason}</p>}
           </div>
@@ -102,7 +116,7 @@ export default function RecipeConfirm({
               </button>
             </div>
           </div>
-          <p className="helper-text">多めに作れば、明日の朝食やお弁当にも使えます。</p>
+          <p className="helper-text">多めに作れば、翌日の朝食やお弁当にも使えます。</p>
         </section>
 
         <section className="info-card" aria-labelledby="ingredients-title">
@@ -136,12 +150,51 @@ export default function RecipeConfirm({
         <section className="info-card" aria-labelledby="taste-title">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">お好み</p>
-              <h2 id="taste-title">味の希望はありますか？</h2>
+              <p className="eyebrow">任意</p>
+              <h2 id="taste-title">今回の味メモ</h2>
             </div>
           </div>
+
+          <div className="preference-slider">
+            <div className="preference-slider__heading">
+              <span>味の濃さ</span>
+              <strong>{saltLabel}</strong>
+            </div>
+            <input
+              aria-label="味の濃さ"
+              type="range"
+              min="1"
+              max="5"
+              value={saltiness}
+              onChange={(event) => setSaltiness(Number(event.target.value))}
+            />
+            <div className="preference-slider__labels">
+              <span>しょっぱくない</span>
+              <span>しょっぱめ</span>
+            </div>
+          </div>
+
+          <div className="preference-slider">
+            <div className="preference-slider__heading">
+              <span>こってり感</span>
+              <strong>{richnessLabel}</strong>
+            </div>
+            <input
+              aria-label="こってり感"
+              type="range"
+              min="1"
+              max="5"
+              value={richness}
+              onChange={(event) => setRichness(Number(event.target.value))}
+            />
+            <div className="preference-slider__labels">
+              <span>さっぱり</span>
+              <span>こってり</span>
+            </div>
+          </div>
+
           <label className="field-label" htmlFor="taste-note">
-            希望があれば入力してください（任意）
+            追加メモがあれば入力してください
           </label>
           <textarea
             id="taste-note"
@@ -151,17 +204,18 @@ export default function RecipeConfirm({
             onChange={changeTasteNote}
             placeholder="例：少し薄味にしたい、辛さを控えめにしたい"
           />
+          <p className="form-help">これはレビュー用の調理メモです。プロトタイプでは調味料の分量は自動変更されません。</p>
         </section>
 
         <div className="sticky-actions">
           <button
             className="button button--primary button--large button--full primary-button full-width"
             type="button"
-            onClick={() => onStart?.({ recipe, servings: displayedServings, tasteNote: displayedTasteNote })}
+            onClick={() => onStart?.({ recipe, servings: displayedServings, tasteNote: tasteSummary })}
           >
             調理を開始
           </button>
-          <p className="action-help">調理中は1工程ずつ大きく表示します</p>
+          <p className="action-help">調理中は1工程ずつ大きく表示します。</p>
         </div>
       </div>
     </section>

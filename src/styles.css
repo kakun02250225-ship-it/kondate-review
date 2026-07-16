@@ -2321,6 +2321,47 @@ textarea:focus {
   margin-top: 18px;
 }
 
+.preference-slider {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.preference-slider__heading,
+.preference-slider__labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.preference-slider__heading {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.preference-slider__heading strong {
+  color: var(--orange-dark);
+}
+
+.preference-slider__labels {
+  color: var(--soft);
+  font-size: 10px;
+}
+
+.preference-slider input[type="range"] {
+  width: 100%;
+  accent-color: var(--orange);
+}
+
+.taste-note-card p:last-child {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
 .prototype-badge {
   display: inline-flex;
   align-items: center;
