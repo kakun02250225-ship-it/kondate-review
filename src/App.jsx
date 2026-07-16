@@ -28,13 +28,13 @@ import {
 } from "./data";
 
 const initialProfile = {
-  age: "19",
-  gender: "回答しない",
+  age: "",
+  gender: "",
   allergies: [],
-  dislikes: ["パクチー"],
-  goals: ["節約", "筋トレ"],
-  fridge: ["卵", "豆腐"],
-  monthlyBudget: "24000",
+  dislikes: [],
+  goals: [],
+  fridge: [],
+  monthlyBudget: "",
 };
 
 const initialConditions = {

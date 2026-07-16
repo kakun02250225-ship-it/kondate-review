@@ -7,7 +7,7 @@ export function PhoneFrame({
   className = "",
   contentClassName = "",
   ariaLabel = "献立サポートアプリ",
-  showStatusBar = true,
+  showStatusBar = false,
   statusTime = "9:41",
   screenId,
   style,
