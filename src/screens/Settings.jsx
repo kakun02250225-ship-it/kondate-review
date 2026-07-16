@@ -1,4 +1,3 @@
-import { setupOptions } from '../data';
 import Header from '../components/Header';
 
 function itemName(item) {
@@ -10,38 +9,34 @@ function joinItems(items, emptyLabel = 'なし') {
   return items.map(itemName).filter(Boolean).join('、') || emptyLabel;
 }
 
-function firstSetupValue(key, fallback) {
-  const source = setupOptions?.[key];
-  if (!Array.isArray(source) || source.length === 0) return fallback;
-  return itemName(source[0]) || fallback;
-}
-
 export default function Settings({
-  profile = { age: 20, gender: '回答しない' },
+  profile = { name: 'user', age: 20, gender: '回答しない' },
   budget = 18000,
   fridgeItems = ['卵', 'キャベツ', '豚こま肉'],
   allergies = [],
-  dislikes = ['パクチー'],
-  tastePreferences = ['薄味', 'さっぱり'],
-  goals = [firstSetupValue('mealGoals', '健康'), '節約'],
+  dislikes = [],
+  tastePreferences = [],
+  goals = [],
   onEdit,
   onBack,
 }) {
+  const displayName = typeof profile === 'string' ? profile : profile?.name || 'user';
   const profileValue = typeof profile === 'string'
     ? profile
     : [profile?.age && `${profile.age}歳`, profile?.gender].filter(Boolean).join('・') || '未設定';
-  const budgetValue = typeof budget === 'number'
+  const budgetValue = typeof budget === 'number' && budget > 0
     ? `月 ¥${budget.toLocaleString('ja-JP')}`
-    : budget || '未設定';
+    : '未設定';
 
   const sections = [
+    { id: 'name', icon: 'u', label: '名前', value: displayName },
     { id: 'profile', icon: '👤', label: 'プロフィール', value: profileValue },
     { id: 'budget', icon: '¥', label: '食費予算', value: budgetValue },
     { id: 'fridge', icon: '❄️', label: '冷蔵庫の食材', value: joinItems(fridgeItems, '登録なし') },
     { id: 'allergies', icon: '!', label: 'アレルギー', value: joinItems(allergies) },
     { id: 'dislikes', icon: '−', label: '苦手な食材', value: joinItems(dislikes) },
     { id: 'taste', icon: '♡', label: '味の好み', value: joinItems(tastePreferences, '未設定') },
-    { id: 'goals', icon: '◎', label: '食事の目的', value: joinItems(goals, '未設定') },
+    { id: 'goals', icon: '●', label: '食事の目的', value: joinItems(goals, '未設定') },
   ];
 
   return (
@@ -54,10 +49,12 @@ export default function Settings({
 
       <div className="screen-body screen-content">
         <div className="settings-profile-card profile-card">
-          <div className="settings-profile-card__avatar profile-avatar" aria-hidden="true">u</div>
+          <div className="settings-profile-card__avatar profile-avatar" aria-hidden="true">
+            {displayName.slice(0, 1).toLowerCase()}
+          </div>
           <div>
             <p className="eyebrow">ひとり暮らし献立</p>
-            <h1 id="settings-title">userの設定</h1>
+            <h1 id="settings-title">{displayName}の設定</h1>
             <p>入力内容を献立提案の条件として使用します。</p>
           </div>
         </div>

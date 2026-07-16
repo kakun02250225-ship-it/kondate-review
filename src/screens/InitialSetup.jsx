@@ -117,6 +117,17 @@ export default function InitialSetup({
         </p>
 
         <label className="form-field">
+          <span className="form-label">名前</span>
+          <input
+            autoComplete="nickname"
+            onChange={(event) => updateField("name", event.target.value)}
+            placeholder="user"
+            type="text"
+            value={profile.name ?? ""}
+          />
+        </label>
+
+        <label className="form-field">
           <span className="form-label">年齢</span>
           <span className="input-with-unit">
             <input

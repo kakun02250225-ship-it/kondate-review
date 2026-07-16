@@ -28,6 +28,7 @@ import {
 } from "./data";
 
 const initialProfile = {
+  name: "user",
   age: "",
   gender: "",
   allergies: [],
@@ -66,6 +67,7 @@ function listValues(value) {
 function normaliseProfile(value) {
   return {
     ...value,
+    name: typeof value?.name === "string" && value.name.trim() ? value.name.trim() : "user",
     allergies: listValues(value?.allergies),
     dislikes: listValues(value?.dislikes),
     goals: listValues(value?.goals),
@@ -107,6 +109,7 @@ function resolveNavTarget(rawId) {
 }
 
 function editableSettingValue(id, profile) {
+  if (id === "name") return profile.name ?? "user";
   if (id === "budget") return profile.monthlyBudget ?? "";
   if (id === "fridge") return listValues(profile.fridge).join("、");
   if (id === "allergies") return listValues(profile.allergies).join("、");
@@ -118,6 +121,7 @@ function editableSettingValue(id, profile) {
 }
 
 const settingLabels = {
+  name: "名前",
   profile: "プロフィール",
   budget: "月の食費予算",
   fridge: "冷蔵庫の食材",
@@ -393,7 +397,9 @@ export default function MealMateApp() {
 
   const saveSetting = () => {
     const values = settingDraft.split(/[、,]/).map((value) => value.trim()).filter(Boolean);
-    if (editingSetting === "budget") {
+    if (editingSetting === "name") {
+      setProfile((previous) => ({ ...previous, name: settingDraft.trim() || "user" }));
+    } else if (editingSetting === "budget") {
       setProfile((previous) => ({ ...previous, monthlyBudget: settingDraft.replace(/[^0-9]/g, "") }));
     } else if (editingSetting === "fridge") {
       setInventory(values);
@@ -443,6 +449,25 @@ export default function MealMateApp() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [editingSetting]);
+
+  useEffect(() => {
+    const handleFocusIn = (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (!target.matches("input, textarea, select")) return;
+
+      window.setTimeout(() => {
+        target.scrollIntoView({
+          block: "center",
+          inline: "nearest",
+          behavior: "smooth",
+        });
+      }, 260);
+    };
+
+    document.addEventListener("focusin", handleFocusIn);
+    return () => document.removeEventListener("focusin", handleFocusIn);
+  }, []);
 
   const onNavChange = (value) => {
     const id = typeof value === "object" ? value.id ?? value.value ?? value.label : value;
