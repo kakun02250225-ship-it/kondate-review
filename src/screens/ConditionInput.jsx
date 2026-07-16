@@ -70,16 +70,11 @@ export default function ConditionInput({
   const conditions = value ?? conditionsProp ?? {};
   const emitChange = onChange ?? onConditionsChange;
   const createPlan = onCreatePlan ?? onSubmit;
-  const dayOptions = readOptions(["days", "dayCounts", "planDays"], [
-    { label: "1日", value: 1 },
-    { label: "3日", value: 3 },
-    { label: "1週間", value: 7 },
-  ]);
+  const duration = conditions.duration ?? "3days";
   const nutrientOptions = readOptions(["nutrients", "nutrition"], [
     "たんぱく質",
     "野菜",
     "低脂質",
-    "炭水化物",
     "バランス",
   ]);
   const timeOptions = readOptions(["cookingTimes", "cookTimes", "times"], [
@@ -93,16 +88,14 @@ export default function ConditionInput({
     "簡単な料理にしたい",
     "冷蔵庫の食材を使いたい",
   ]);
-  const exerciseOptions = readOptions(["exercises", "exercise"], [
-    "運動なし",
-    "筋トレ",
-    "有酸素運動",
-    "部活動",
-    "軽い運動",
-  ]);
 
   const updateField = (field, nextValue) => {
-    emitChange?.({ ...conditions, [field]: nextValue });
+    const next = { ...conditions, [field]: nextValue };
+    if (field === "duration") {
+      next.days = nextValue === "1day" ? 1 : nextValue === "7days" ? 7 : 3;
+      if (nextValue === "meal") next.mealType ??= "dinner";
+    }
+    emitChange?.(next);
   };
 
   const handleSubmit = (event) => {
@@ -114,23 +107,42 @@ export default function ConditionInput({
     <section className="screen condition-input-screen">
       <Header
         onBack={onBack}
-        subtitle="今日の予定に合わせて、無理のない献立を作ります"
+        subtitle="先に作りたい範囲を決めると、その範囲だけの買い物リストを作ります"
         title="献立の条件"
       />
 
       <form className="screen-body form-stack" onSubmit={handleSubmit}>
         <div className="info-card info-card--warm">
           <span className="info-card__icon" aria-hidden="true">✨</span>
-          <p>入力した条件に合う固定のおすすめ献立を表示します。あとから料理だけ変更できます。</p>
+          <p>買い物リストは、ここで作成して決定した献立に必要な食材だけを表示します。</p>
         </div>
 
         <SelectableChoices
-          legend="何日分を作りますか？"
-          name="days"
-          onChange={(nextValue) => updateField("days", nextValue)}
-          options={dayOptions}
-          value={conditions.days ?? 1}
+          legend="何回分の献立を作りますか？"
+          name="duration"
+          onChange={(nextValue) => updateField("duration", nextValue)}
+          options={[
+            { label: "1食", value: "meal" },
+            { label: "1日", value: "1day" },
+            { label: "3日", value: "3days" },
+            { label: "1週間", value: "7days" },
+          ]}
+          value={duration}
         />
+
+        {duration === "meal" && (
+          <SelectableChoices
+            legend="どの食事を作りますか？"
+            name="meal-type"
+            onChange={(nextValue) => updateField("mealType", nextValue)}
+            options={[
+              { label: "朝ごはん", value: "breakfast" },
+              { label: "昼ごはん", value: "lunch" },
+              { label: "夜ごはん", value: "dinner" },
+            ]}
+            value={conditions.mealType ?? "dinner"}
+          />
+        )}
 
         <label className="form-field">
           <span className="form-label">今回の食費予算</span>
@@ -171,14 +183,6 @@ export default function ConditionInput({
           onChange={(nextValue) => updateField("constraints", nextValue)}
           options={constraintOptions}
           value={conditions.constraints ?? []}
-        />
-
-        <SelectableChoices
-          legend="今日の運動内容"
-          name="exercise"
-          onChange={(nextValue) => updateField("exercise", nextValue)}
-          options={exerciseOptions}
-          value={conditions.exercise ?? "運動なし"}
         />
 
         <div className="form-actions sticky-actions">

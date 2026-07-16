@@ -39,7 +39,9 @@ const initialProfile = {
 };
 
 const initialConditions = {
+  duration: "3days",
   days: 3,
+  mealType: "dinner",
   budget: "3000",
   nutrients: ["たんぱく質", "バランス"],
   cookTime: 30,
@@ -55,6 +57,18 @@ const mealLabels = {
   dinner: "夕食",
 };
 
+const cleanMealLabels = {
+  breakfast: "朝ごはん",
+  lunch: "昼ごはん",
+  dinner: "夜ごはん",
+};
+
+const planRecipes = {
+  breakfast: ["recipe-8", "recipe-9"],
+  lunch: ["recipe-5", "recipe-2", "recipe-6"],
+  dinner: ["recipe-1", "recipe-3", "recipe-4"],
+};
+
 function listValues(value) {
   if (Array.isArray(value)) return value;
   if (typeof value !== "string") return [];
@@ -64,16 +78,75 @@ function listValues(value) {
     .filter(Boolean);
 }
 
+function normaliseIngredientIds(values) {
+  const rawValues = listValues(values);
+  return rawValues
+    .map((value) => {
+      const trimmed = String(value).trim();
+      const ingredient = ingredients.find(
+        (item) => item.id === trimmed || item.name === trimmed,
+      );
+      return ingredient?.id ?? trimmed;
+    })
+    .filter(Boolean);
+}
+
 function normaliseProfile(value) {
   return {
     ...value,
     name: typeof value?.name === "string" && value.name.trim() ? value.name.trim() : "user",
-    allergies: listValues(value?.allergies),
+    allergies: normaliseIngredientIds(value?.allergies),
     dislikes: listValues(value?.dislikes),
     goals: listValues(value?.goals),
     fridge: listValues(value?.fridge),
     tastePreferences: listValues(value?.tastePreferences),
   };
+}
+
+function recipeHasIngredients(recipe, ingredientIds) {
+  if (!recipe || ingredientIds.length === 0) return false;
+  return (recipe.ingredients ?? []).some((item) => ingredientIds.includes(item.ingredientId));
+}
+
+function supportsMealType(recipe, mealType) {
+  const types = Array.isArray(recipe?.mealType) ? recipe.mealType : [recipe?.mealType];
+  return types.includes(mealType);
+}
+
+function safeRecipeFor(mealType, blockedIngredientIds, preferredIds = []) {
+  const preferredRecipe = preferredIds
+    .map((id) => recipes.find((recipe) => recipe.id === id))
+    .find((recipe) => (
+      recipe
+      && supportsMealType(recipe, mealType)
+      && !recipeHasIngredients(recipe, blockedIngredientIds)
+    ));
+  if (preferredRecipe) return preferredRecipe.id;
+
+  return recipes.find((recipe) => (
+    supportsMealType(recipe, mealType)
+    && !recipeHasIngredients(recipe, blockedIngredientIds)
+  ))?.id ?? preferredIds[0] ?? recipes[0]?.id;
+}
+
+function applyAllergyExclusions(plan, blockedIngredientIds) {
+  if (!plan || blockedIngredientIds.length === 0) return plan;
+  const nextPlan = clone(plan);
+  daysFromPlan(nextPlan).forEach((day) => {
+    Object.entries(day?.meals ?? {}).forEach(([mealType, recipeId]) => {
+      const recipe = recipes.find((item) => item.id === recipeId);
+      if (!recipeHasIngredients(recipe, blockedIngredientIds)) return;
+      day.meals[mealType] = safeRecipeFor(mealType, blockedIngredientIds, planRecipes[mealType]);
+    });
+  });
+  const allergyNames = blockedIngredientIds
+    .map((id) => ingredients.find((ingredient) => ingredient.id === id)?.name)
+    .filter(Boolean);
+  nextPlan.excludedAllergyIngredientIds = blockedIngredientIds;
+  nextPlan.allergyNote = allergyNames.length
+    ? `アレルギー食材（${allergyNames.join("、")}）を含む料理は外しています。`
+    : "アレルギー食材を含む料理は外しています。";
+  return nextPlan;
 }
 
 function daysFromPlan(plan) {
@@ -87,6 +160,68 @@ function firstRecipeId(plan) {
   const firstDay = daysFromPlan(plan)[0];
   const meals = firstDay?.meals ?? firstDay?.mealIds ?? firstDay ?? {};
   return meals.dinner ?? meals.lunch ?? meals.breakfast ?? recipes[0]?.id;
+}
+
+function buildPlan(conditions, profile) {
+  const duration = conditions?.duration ?? `${conditions?.days ?? 3}days`;
+  const mealType = conditions?.mealType ?? "dinner";
+  const blockedIngredientIds = normaliseIngredientIds(profile?.allergies);
+
+  if (duration === "meal") {
+    const recipeId = safeRecipeFor(mealType, blockedIngredientIds, planRecipes[mealType] ?? planRecipes.dinner);
+    return applyAllergyExclusions({
+      id: `plan-one-${mealType}`,
+      label: `1食分（${cleanMealLabels[mealType]}）`,
+      title: `${cleanMealLabels[mealType]}の献立`,
+      duration: 1,
+      mealSlots: [mealType],
+      reason: "今回選んだ1食だけを作るための献立です。買い物リストもこの料理に必要な食材だけを表示します。",
+      days: [
+        {
+          day: 1,
+          label: "今日",
+          meals: { [mealType]: recipeId },
+        },
+      ],
+    }, blockedIngredientIds);
+  }
+
+  if (duration === "1day" || Number(conditions?.days) === 1) {
+    return applyAllergyExclusions({
+      ...clone(mealPlans.oneDay),
+      title: "1日分の献立",
+      label: "1日分",
+      mealSlots: ["breakfast", "lunch", "dinner"],
+    }, blockedIngredientIds);
+  }
+
+  if (duration === "7days" || Number(conditions?.days) === 7) {
+    const baseDays = daysFromPlan(mealPlans.threeDay);
+    return applyAllergyExclusions({
+      ...clone(mealPlans.threeDay),
+      id: "plan-7-days",
+      title: "1週間分の献立",
+      label: "1週間分",
+      duration: 7,
+      mealSlots: ["breakfast", "lunch", "dinner"],
+      reason: "3日分の献立パターンをもとに、1週間の買い物量を確認するためのレビュー用プランです。",
+      days: Array.from({ length: 7 }, (_, index) => {
+        const source = baseDays[index % baseDays.length] ?? baseDays[0];
+        return {
+          ...clone(source),
+          day: index + 1,
+          label: `${index + 1}日目`,
+        };
+      }),
+    }, blockedIngredientIds);
+  }
+
+  return applyAllergyExclusions({
+    ...clone(mealPlans.threeDay),
+    title: "3日分の献立",
+    label: "3日分",
+    mealSlots: ["breakfast", "lunch", "dinner"],
+  }, blockedIngredientIds);
 }
 
 function navIdForScreen(screen) {
@@ -112,7 +247,9 @@ function editableSettingValue(id, profile) {
   if (id === "name") return profile.name ?? "user";
   if (id === "budget") return profile.monthlyBudget ?? "";
   if (id === "fridge") return listValues(profile.fridge).join("、");
-  if (id === "allergies") return listValues(profile.allergies).join("、");
+  if (id === "allergies") return listValues(profile.allergies)
+    .map((value) => ingredients.find((ingredient) => ingredient.id === value)?.name ?? value)
+    .join("、");
   if (id === "dislikes") return listValues(profile.dislikes).join("、");
   if (id === "taste") return listValues(profile.tastePreferences ?? ["さっぱり", "やや薄味"]).join("、");
   if (id === "goals") return listValues(profile.goals).join("、");
@@ -135,7 +272,8 @@ export default function MealMateApp() {
   const [currentScreen, setCurrentScreen] = useState("initialSetup");
   const [profile, setProfile] = useState(initialProfile);
   const [conditions, setConditions] = useState(initialConditions);
-  const [activePlan, setActivePlan] = useState(() => clone(mealPlans.threeDay ?? mealPlans.oneDay));
+  const [activePlan, setActivePlan] = useState(null);
+  const [planConfirmed, setPlanConfirmed] = useState(false);
   const [editingSlot, setEditingSlot] = useState(null);
   const [checkedItems, setCheckedItems] = useState({});
   const [unavailableIngredientId, setUnavailableIngredientId] = useState(
@@ -145,7 +283,7 @@ export default function MealMateApp() {
   const [ingredientReplacements, setIngredientReplacements] = useState({});
   const [hasScannedReceipt, setHasScannedReceipt] = useState(false);
   const [inventory, setInventory] = useState(initialProfile.fridge);
-  const [selectedRecipeId, setSelectedRecipeId] = useState(() => firstRecipeId(mealPlans.threeDay));
+  const [selectedRecipeId, setSelectedRecipeId] = useState(() => recipes[0]?.id);
   const [cookingStep, setCookingStep] = useState(0);
   const [servings, setServings] = useState(1);
   const [tasteNote, setTasteNote] = useState("");
@@ -198,7 +336,7 @@ export default function MealMateApp() {
             name: item.name,
             usedIn: new Set(),
           };
-          current.usedIn.add(`${day.label ?? `${dayIndex + 1}日目`}・${mealLabels[mealType] ?? mealType}`);
+          current.usedIn.add(`${day.label ?? `${dayIndex + 1}日目`}・${cleanMealLabels[mealType] ?? mealType}`);
           required.set(item.ingredientId, current);
         });
       });
@@ -306,9 +444,11 @@ export default function MealMateApp() {
   const createPlan = (nextConditions) => {
     const next = nextConditions ?? conditions;
     setConditions(next);
-    const plan = Number(next.days) === 1 ? mealPlans.oneDay : mealPlans.threeDay;
-    const clonedPlan = clone(plan ?? mealPlans.oneDay);
+    const clonedPlan = buildPlan(next, profile);
     setActivePlan(clonedPlan);
+    setPlanConfirmed(false);
+    setCheckedItems({});
+    setIngredientReplacements({});
     setSelectedRecipeId(firstRecipeId(clonedPlan));
     moveTo("mealSuggestion");
   };
@@ -420,7 +560,9 @@ export default function MealMateApp() {
     } else if (editingSetting === "fridge") {
       setInventory(values);
       setProfile((previous) => ({ ...previous, fridge: values }));
-    } else if (["allergies", "dislikes", "goals"].includes(editingSetting)) {
+    } else if (editingSetting === "allergies") {
+      setProfile((previous) => ({ ...previous, allergies: normaliseIngredientIds(values) }));
+    } else if (["dislikes", "goals"].includes(editingSetting)) {
       setProfile((previous) => ({ ...previous, [editingSetting]: values }));
     } else if (editingSetting === "taste") {
       setProfile((previous) => ({ ...previous, tastePreferences: values }));
@@ -487,7 +629,19 @@ export default function MealMateApp() {
 
   const onNavChange = (value) => {
     const id = typeof value === "object" ? value.id ?? value.value ?? value.label : value;
-    moveTo(resolveNavTarget(id));
+    const target = resolveNavTarget(id);
+    if (target === "mealSuggestion" && !activePlan) {
+      moveTo("conditionInput", "まず条件を入れて献立を作成してください");
+      return;
+    }
+    if ((target === "shoppingList" || target === "recipeConfirm") && !planConfirmed) {
+      moveTo(
+        activePlan ? "mealSuggestion" : "conditionInput",
+        activePlan ? "買い物リストを見る前に、この献立に決定してください" : "先に献立を作成してください",
+      );
+      return;
+    }
+    moveTo(target);
   };
 
   const renderScreen = () => {
@@ -512,7 +666,7 @@ export default function MealMateApp() {
             conditions={conditions}
             onConditionsChange={setConditions}
             onCreatePlan={createPlan}
-            onBack={() => moveTo("mealSuggestion")}
+            onBack={() => moveTo(activePlan ? "mealSuggestion" : "conditionInput")}
           />
         );
       case "mealSuggestion":
@@ -523,7 +677,10 @@ export default function MealMateApp() {
               setEditingSlot(slot);
               moveTo("mealChange");
             }}
-            onConfirmPlan={() => moveTo("shoppingList")}
+            onConfirmPlan={() => {
+              setPlanConfirmed(true);
+              moveTo("shoppingList");
+            }}
             onBack={() => moveTo("conditionInput")}
           />
         );
@@ -532,6 +689,7 @@ export default function MealMateApp() {
           <MealChange
             currentRecipeId={editingSlot?.recipeId}
             editingSlot={editingSlot}
+            excludedIngredientIds={normaliseIngredientIds(profile.allergies)}
             selectedRecipeId={editingSlot?.recipeId}
             onSelectRecipe={replaceMeal}
             onBack={() => moveTo("mealSuggestion")}
@@ -541,6 +699,8 @@ export default function MealMateApp() {
         return (
           <ShoppingList
             groups={visibleShoppingGroups}
+            plan={activePlan}
+            planConfirmed={planConfirmed}
             unavailableIngredientId={shoppingUnavailableIngredientId}
             checkedItems={checkedItems}
             onToggleItem={toggleShoppingItem}
@@ -647,7 +807,9 @@ export default function MealMateApp() {
             profile={profile}
             budget={Number(profile.monthlyBudget) || 0}
             fridgeItems={inventory}
-            allergies={listValues(profile.allergies)}
+            allergies={listValues(profile.allergies).map((value) => (
+              ingredients.find((ingredient) => ingredient.id === value)?.name ?? value
+            ))}
             dislikes={listValues(profile.dislikes)}
             tastePreferences={listValues(profile.tastePreferences ?? ["さっぱり", "やや薄味"])}
             goals={listValues(profile.goals)}

@@ -14,12 +14,18 @@ function supportsMealType(recipe, mealType) {
   return types.includes(mealType);
 }
 
+function usesExcludedIngredient(recipe, excludedIngredientIds = []) {
+  if (!Array.isArray(excludedIngredientIds) || excludedIngredientIds.length === 0) return false;
+  return (recipe?.ingredients ?? []).some((item) => excludedIngredientIds.includes(item.ingredientId));
+}
+
 export default function MealChange({
   currentRecipe,
   currentRecipeId,
   editingSlot,
   candidates,
   candidateRecipeIds,
+  excludedIngredientIds = [],
   selectedRecipeId,
   onSelectRecipe,
   onSelect,
@@ -33,9 +39,11 @@ export default function MealChange({
       ? suppliedCandidates
       : recipes.filter(
           (recipe) =>
-            recipe.id !== selectedCurrentRecipe?.id && supportsMealType(recipe, editingSlot?.mealType),
+            recipe.id !== selectedCurrentRecipe?.id
+            && supportsMealType(recipe, editingSlot?.mealType)
+            && !usesExcludedIngredient(recipe, excludedIngredientIds),
         )
-  ).slice(0, 5);
+  ).filter((recipe) => !usesExcludedIngredient(recipe, excludedIngredientIds)).slice(0, 5);
   const selectRecipe = onSelectRecipe ?? onSelect;
 
   return (
