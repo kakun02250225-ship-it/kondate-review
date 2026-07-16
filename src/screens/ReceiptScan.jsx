@@ -14,12 +14,19 @@ export default function ReceiptScan({
   onBack,
 }) {
   const [localHasScanned, setLocalHasScanned] = useState(false);
+  const [isReading, setIsReading] = useState(false);
   const scanned = hasScanned ?? localHasScanned;
   const scannedItems = items.filter((item) => itemLabel(item));
 
   const handleScan = () => {
-    if (hasScanned === undefined) setLocalHasScanned(true);
-    onScan?.(scannedItems);
+    setIsReading(true);
+    if (hasScanned === undefined) setLocalHasScanned(false);
+
+    window.setTimeout(() => {
+      if (hasScanned === undefined) setLocalHasScanned(true);
+      setIsReading(false);
+      onScan?.(scannedItems);
+    }, 900);
   };
 
   return (
@@ -32,7 +39,7 @@ export default function ReceiptScan({
 
       <div className="screen-body screen-content">
         <div className={`camera-card receipt-camera${scanned ? ' camera-card--scanned' : ''}`}>
-          <div className="camera-view scan-content" aria-label="レシート撮影エリア">
+          <div className="camera-view scan-content" aria-label="レシート読み取りエリア">
             <span className="camera-view__corner camera-view__corner--top-left" aria-hidden="true" />
             <span className="camera-view__corner camera-view__corner--top-right" aria-hidden="true" />
             <span className="camera-view__corner camera-view__corner--bottom-left" aria-hidden="true" />
@@ -44,18 +51,19 @@ export default function ReceiptScan({
               <span />
               <span className="receipt-preview__short" />
             </div>
+            {isReading && <div className="scan-reading-indicator" aria-hidden="true" />}
             <p className="camera-view__guide">
-              {scanned ? '読み取りが完了しました' : '枠の中にレシートを合わせてください'}
+              {isReading ? '読み取り中です' : scanned ? '読み取りが完了しました' : 'レシートを枠に合わせてください'}
             </p>
           </div>
 
-          <button className="camera-button secondary-button" type="button" onClick={handleScan}>
+          <button className="camera-button secondary-button" type="button" onClick={handleScan} disabled={isReading}>
             <span className="camera-button__icon" aria-hidden="true">●</span>
-            {scanned ? 'もう一度撮影する' : '撮影する'}
+            {isReading ? '読み取り中...' : scanned ? 'もう一度読み取る' : 'レシートを読み取る'}
           </button>
         </div>
 
-        {scanned && (
+        {scanned && !isReading && (
           <section className="info-card scan-result" aria-labelledby="scan-result-title">
             <div className="section-heading">
               <div>
@@ -87,14 +95,14 @@ export default function ReceiptScan({
             >
               冷蔵庫に登録する
             </button>
-            <p className="action-help">登録すると次回の献立提案に利用されます</p>
+            <p className="action-help">登録すると次回の献立条件に利用されます。</p>
           </section>
         )}
 
-        {!scanned && (
+        {!scanned && !isReading && (
           <div className="tip tip-card">
             <span aria-hidden="true">💡</span>
-            <p>文字が読みやすいように、明るい場所でまっすぐ撮影してください。</p>
+            <p>このプロトタイプでは、読み取りボタンを押すとサンプルの読み取り結果を表示します。</p>
           </div>
         )}
       </div>

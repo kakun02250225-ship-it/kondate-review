@@ -147,6 +147,7 @@ a {
   flex: 1;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scroll-padding: 96px 0 220px;
   scrollbar-width: none;
   background: var(--paper);
 }
@@ -347,6 +348,11 @@ a {
   display: grid;
   gap: 8px;
   margin-top: 17px;
+  scroll-margin: 96px 0 220px;
+}
+
+.form-field {
+  scroll-margin: 96px 0 220px;
 }
 
 .field > label,
@@ -1954,6 +1960,33 @@ textarea:focus {
 
 .receipt-preview__short { width: 58%; }
 
+.scan-reading-indicator {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  top: 50%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.86);
+  border-radius: 999px;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.65);
+  animation: scan-line 900ms ease-in-out infinite;
+}
+
+@keyframes scan-line {
+  0% {
+    transform: translateY(-86px);
+    opacity: 0.2;
+  }
+  25%,
+  75% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(86px);
+    opacity: 0.2;
+  }
+}
+
 .camera-view__guide {
   position: absolute;
   left: 20px;
@@ -1974,6 +2007,11 @@ textarea:focus {
   border-radius: 14px;
   font-weight: 800;
   cursor: pointer;
+}
+
+.camera-button:disabled {
+  opacity: 0.72;
+  cursor: wait;
 }
 
 .scan-result__list {
