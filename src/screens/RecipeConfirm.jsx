@@ -241,7 +241,7 @@ export default function RecipeConfirm({
             onChange={changeTasteNote}
             placeholder="例：少し薄味にしたい、辛さを控えめにしたい"
           />
-          <p className="form-help">これはレビュー用の調理メモです。プロトタイプでは調味料の分量は自動変更されません。</p>
+          <p className="form-help">味スライダーを動かすと、ポン酢・しょうゆ・みそ・油など調味料の分量だけを割合変更します。メモは調理中にも表示します。</p>
         </section>
 
         <div className="sticky-actions">

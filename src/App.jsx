@@ -1153,7 +1153,7 @@ export default function MealMateApp() {
     }
   };
 
-  const showNav = currentScreen !== "initialSetup";
+  const showNav = !["initialSetup", "recipeConfirm", "cooking", "feedback"].includes(currentScreen);
 
   return (
     <main className="prototype-page">

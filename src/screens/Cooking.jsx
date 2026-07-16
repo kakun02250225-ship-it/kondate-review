@@ -21,6 +21,8 @@ export default function Cooking({
   const activeStep = Math.min(Math.max(currentStep ?? localStep, 0), Math.max(steps.length - 1, 0));
   const hasNext = activeStep < steps.length - 1;
   const progress = steps.length > 0 ? ((activeStep + 1) / steps.length) * 100 : 0;
+  const stepTotal = Math.max(steps.length, 1);
+  const stepFraction = `${activeStep + 1}/${stepTotal}`;
 
   const handleNext = () => {
     if (!hasNext) {
@@ -70,7 +72,10 @@ export default function Cooking({
         )}
 
         <article className="current-step-card">
-          <p className="eyebrow">いまの手順</p>
+          <div className="current-step-card__head">
+            <p className="eyebrow">いまの手順</p>
+            <strong aria-label={`全${stepTotal}工程中${activeStep + 1}工程目`}>{stepFraction}</strong>
+          </div>
           <div className="current-step-card__number step-number" aria-hidden="true">{activeStep + 1}</div>
           <h2 id="cooking-title">{steps[activeStep] || '材料を準備しましょう'}</h2>
           {hasNext && (
@@ -94,7 +99,7 @@ export default function Cooking({
 
         <div className="sticky-actions">
           <button className="button button--primary button--large button--full primary-button full-width" type="button" onClick={handleNext}>
-            {hasNext ? '次の手順へ' : '調理を完了'}
+            {hasNext ? `次の手順へ（${activeStep + 2}/${stepTotal}）` : '調理を完了'}
           </button>
           {hasNext && (
             <button
