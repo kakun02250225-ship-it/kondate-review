@@ -69,6 +69,22 @@ const planRecipes = {
   dinner: ["recipe-1", "recipe-3", "recipe-4"],
 };
 
+const allergyIngredientIds = [
+  "egg",
+  "tofu",
+  "natto",
+  "salmon",
+  "mackerel",
+  "tuna",
+  "chicken-breast",
+  "ground-chicken",
+  "pork",
+  "yogurt",
+  "rice",
+  "udon",
+  "pasta",
+];
+
 function listValues(value) {
   if (Array.isArray(value)) return value;
   if (typeof value !== "string") return [];
@@ -294,6 +310,7 @@ export default function MealMateApp() {
   const [notice, setNotice] = useState("");
   const [editingSetting, setEditingSetting] = useState(null);
   const [settingDraft, setSettingDraft] = useState("");
+  const [settingSelection, setSettingSelection] = useState([]);
   const settingTriggerRef = useRef(null);
   const settingDialogRef = useRef(null);
 
@@ -304,6 +321,13 @@ export default function MealMateApp() {
   const ingredientMap = useMemo(
     () => Object.fromEntries(ingredients.map((ingredient) => [ingredient.id, ingredient])),
     [],
+  );
+  const settingAllergyOptions = useMemo(
+    () => allergyIngredientIds
+      .map((id) => ingredientMap[id])
+      .filter(Boolean)
+      .map((ingredient) => ({ value: ingredient.id, label: ingredient.name })),
+    [ingredientMap],
   );
 
   const selectedRecipe = recipeMap[selectedRecipeId] ?? recipeMap[firstRecipeId(activePlan)] ?? recipes[0];
@@ -549,6 +573,7 @@ export default function MealMateApp() {
       : null;
     setEditingSetting(id);
     setSettingDraft(editableSettingValue(id, { ...profile, fridge: inventory }));
+    setSettingSelection(id === "allergies" ? normaliseIngredientIds(profile.allergies) : []);
   };
 
   const saveSetting = () => {
@@ -561,7 +586,7 @@ export default function MealMateApp() {
       setInventory(values);
       setProfile((previous) => ({ ...previous, fridge: values }));
     } else if (editingSetting === "allergies") {
-      setProfile((previous) => ({ ...previous, allergies: normaliseIngredientIds(values) }));
+      setProfile((previous) => ({ ...previous, allergies: settingSelection }));
     } else if (["dislikes", "goals"].includes(editingSetting)) {
       setProfile((previous) => ({ ...previous, [editingSetting]: values }));
     } else if (editingSetting === "taste") {
@@ -865,16 +890,48 @@ export default function MealMateApp() {
               <div className="setting-sheet__handle" aria-hidden="true" />
               <p className="eyebrow">設定を編集</p>
               <h2 id="setting-sheet-title">{settingLabels[editingSetting]}</h2>
-              <p>カンマまたは「、」で区切って入力できます。</p>
-              <label className="field">
-                <span className="form-label">新しい内容</span>
-                <input
-                  autoFocus
-                  type={editingSetting === "budget" ? "number" : "text"}
-                  value={settingDraft}
-                  onChange={(event) => setSettingDraft(event.target.value)}
-                />
-              </label>
+              {editingSetting === "allergies" ? (
+                <fieldset className="form-field choice-field">
+                  <legend className="form-label">該当する食材を選択</legend>
+                  <div className="choice-grid">
+                    {settingAllergyOptions.map((option) => {
+                      const checked = settingSelection.includes(option.value);
+                      return (
+                        <label className={`choice-chip${checked ? " is-selected" : ""}`} key={option.value}>
+                          <input
+                            checked={checked}
+                            name="setting-allergies"
+                            onChange={() => {
+                              setSettingSelection((previous) => (
+                                checked
+                                  ? previous.filter((value) => value !== option.value)
+                                  : [...previous, option.value]
+                              ));
+                            }}
+                            type="checkbox"
+                            value={option.value}
+                          />
+                          <span>{option.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <p className="form-help">選んだ食材を含む料理は、次回の献立候補から外します。</p>
+                </fieldset>
+              ) : (
+                <>
+                  <p>カンマまたは「、」で区切って入力できます。</p>
+                  <label className="field">
+                    <span className="form-label">新しい内容</span>
+                    <input
+                      autoFocus
+                      type={editingSetting === "budget" ? "number" : "text"}
+                      value={settingDraft}
+                      onChange={(event) => setSettingDraft(event.target.value)}
+                    />
+                  </label>
+                </>
+              )}
               <div className="setting-sheet__actions">
                 <button className="button button--secondary" type="button" onClick={closeSetting}>
                   キャンセル
