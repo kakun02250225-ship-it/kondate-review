@@ -2770,6 +2770,168 @@ button.calendar-day {
   font-weight: 750;
 }
 
+.date-range-field {
+  padding: 16px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.date-range-inputs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: 8px;
+}
+
+.date-range-inputs label {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.date-range-inputs input {
+  width: 100%;
+  min-width: 0;
+  padding: 12px 9px;
+  font-size: 16px;
+}
+
+.date-range-inputs input:disabled {
+  color: var(--soft);
+  background: #f7f3ef;
+}
+
+.date-range-separator {
+  padding-bottom: 13px;
+  color: var(--soft);
+  font-weight: 800;
+}
+
+.date-range-help,
+.meal-count-preview {
+  margin: 0;
+  color: var(--soft);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.date-range-help.is-valid,
+.meal-count-preview.is-valid {
+  color: var(--green);
+  font-weight: 800;
+}
+
+.meal-count-preview.is-error {
+  color: #bd4b32;
+}
+
+.button:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.meal-card__view {
+  display: block;
+  margin-top: 5px;
+  color: var(--orange-dark);
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.shopping-list-screen .ingredient-list__item {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 7px 10px;
+}
+
+.shopping-list-screen .ingredient-list__item > input[type="checkbox"] {
+  grid-column: 1;
+  margin-top: 2px;
+}
+
+.shopping-list-screen .ingredient-list__name-wrap {
+  grid-column: 2;
+}
+
+.shopping-list-screen .ingredient-list__amount {
+  grid-column: 3;
+  min-width: 48px;
+  margin: 0;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.ingredient-list__unavailable {
+  grid-column: 2 / 4;
+  justify-self: end;
+  padding: 5px 8px;
+  color: var(--muted);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.post-cooking-card {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 12px;
+  margin-top: 18px;
+  padding: 16px;
+  background: var(--green-soft);
+  border: 1px solid rgba(61, 118, 93, 0.2);
+  border-radius: 19px;
+}
+
+.post-cooking-card__icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: var(--green);
+  border-radius: 50%;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.post-cooking-card h2,
+.post-cooking-card p {
+  margin: 0;
+}
+
+.post-cooking-card h2 {
+  margin-top: 3px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.post-cooking-card p:not(.eyebrow) {
+  margin: 7px 0 12px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.post-cooking-card small {
+  display: block;
+  margin-top: 9px;
+  color: var(--soft);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
 @media (max-width: 520px) {
   html,
   body {

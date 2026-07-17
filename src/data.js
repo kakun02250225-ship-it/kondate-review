@@ -894,6 +894,7 @@ export const conditionOptions = {
     { value: 15, label: "15分以内" },
     { value: 30, label: "30分以内" },
     { value: 45, label: "45分以内" },
+    { value: 60, label: "1時間以内" },
   ],
   cookingConditions: ["時間を短くしたい", "洗い物を減らしたい", "簡単な料理にしたい", "冷蔵庫の食材を使いたい"],
   moods: ["疲れている", "食欲がない", "しっかり食べたい", "さっぱり食べたい"],

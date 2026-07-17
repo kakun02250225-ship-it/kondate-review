@@ -39,9 +39,11 @@ const initialProfile = {
 };
 
 const initialConditions = {
-  duration: "3days",
-  days: 3,
-  mealType: "dinner",
+  duration: "custom",
+  days: 0,
+  startDate: "",
+  endDate: "",
+  mealSlots: ["breakfast", "lunch", "dinner"],
   budget: "",
   nutrients: [],
   cookTime: "",
@@ -146,17 +148,17 @@ function supportsMealType(recipe, mealType) {
 }
 
 function mealCountFromConditions(conditions = {}) {
-  const duration = conditions.duration ?? "3days";
-  if (duration === "meal") return 1;
-  if (duration === "1day") return 3;
-  if (duration === "7days") return 21;
-  return 9;
+  const days = Math.min(7, Math.max(1, Number(conditions.days) || 1));
+  const mealSlots = Array.isArray(conditions.mealSlots) && conditions.mealSlots.length
+    ? conditions.mealSlots
+    : [conditions.mealType ?? "dinner"];
+  return days * mealSlots.length;
 }
 
 function buildPriorities(conditions = {}, profile = {}) {
   const priorities = [];
   if (normaliseAllergyValues(profile.allergies).length) priorities.push("アレルギー除外");
-  if (conditions.cookTime) priorities.push(`${conditions.cookTime}分以内`);
+  if (conditions.cookTime) priorities.push(Number(conditions.cookTime) === 60 ? "1時間以内" : `${conditions.cookTime}分以内`);
   if (conditions.budget) priorities.push(`予算${Number(conditions.budget).toLocaleString()}円以内`);
   (conditions.constraints ?? []).forEach((value) => priorities.push(value));
   (conditions.moods ?? []).forEach((value) => priorities.push(value));
@@ -191,8 +193,10 @@ function scoreRecipe(recipe, conditions = {}, preferredIds = []) {
 
   if (preferredIndex >= 0) score += Math.max(0, 14 - preferredIndex);
   if (maxCookTime) {
-    score += Number(recipe.cookingTime ?? 0) <= maxCookTime ? 70 : -100;
-    score += Math.max(-15, maxCookTime - Number(recipe.cookingTime ?? 0));
+    const recipeTime = Number(recipe.cookingTime ?? 0);
+    score += recipeTime <= maxCookTime ? 70 : -100;
+    if (maxCookTime <= 15) score += Math.max(0, maxCookTime - recipeTime);
+    if (maxCookTime >= 60) score += Math.min(18, Math.max(0, recipeTime - 10) * 0.9);
   }
   if (budget) {
     const perMealBudget = budget / mealCountFromConditions(conditions);
@@ -360,7 +364,9 @@ function applyPlanRules(plan, blockedIngredientIds, conditions) {
     nextPlan.allergyNote = `アレルギー食材（${allergyNames.join("、")}）を含む料理は外しています。`;
   }
   if (conditions?.cookTime) {
-    nextPlan.timeNote = `調理時間は${conditions.cookTime}分以内を優先しています。`;
+    nextPlan.timeNote = Number(conditions.cookTime) === 60
+      ? "1時間以内で、最短時間だけに偏らず作りごたえのある料理も優先しています。"
+      : `調理時間は${conditions.cookTime}分以内を優先しています。`;
   }
   nextPlan.appliedPriorities = conditions?.appliedPriorities ?? [];
   if (conditions?.cuisines?.length) {
@@ -379,7 +385,33 @@ function daysFromPlan(plan) {
 function firstRecipeId(plan) {
   const firstDay = daysFromPlan(plan)[0];
   const meals = firstDay?.meals ?? firstDay?.mealIds ?? firstDay ?? {};
-  return meals.dinner ?? meals.lunch ?? meals.breakfast ?? recipes[0]?.id;
+  return meals.breakfast ?? meals.lunch ?? meals.dinner ?? recipes[0]?.id;
+}
+
+function parseDateInput(value) {
+  const match = String(value ?? "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function dateInputValue(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(date, days) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function formatPlanDate(date, withWeekday = true) {
+  const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+  const base = `${date.getMonth() + 1}月${date.getDate()}日`;
+  return withWeekday ? `${base}（${weekdays[date.getDay()]}）` : base;
 }
 
 function parseIngredientAmount(value) {
@@ -397,71 +429,68 @@ function displayAggregatedNumber(value) {
 }
 
 function buildPlan(conditions, profile) {
-  const duration = conditions?.duration ?? `${conditions?.days ?? 3}days`;
-  const mealType = conditions?.mealType ?? "dinner";
+  const startDate = parseDateInput(conditions?.startDate) ?? new Date();
+  const requestedEndDate = parseDateInput(conditions?.endDate);
+  const calculatedDays = requestedEndDate
+    ? Math.floor((requestedEndDate.getTime() - startDate.getTime()) / 86400000) + 1
+    : Number(conditions?.days) || 1;
+  const dayCount = Math.min(7, Math.max(1, calculatedDays));
+  const legacyMealSlots = conditions?.duration === "meal"
+    ? [conditions?.mealType ?? "dinner"]
+    : ["breakfast", "lunch", "dinner"];
+  const mealSlots = Array.isArray(conditions?.mealSlots) && conditions.mealSlots.length
+    ? conditions.mealSlots.filter((slot) => ["breakfast", "lunch", "dinner"].includes(slot))
+    : legacyMealSlots;
+  const endDate = addDays(startDate, dayCount - 1);
+  const rangeLabel = dayCount === 1
+    ? formatPlanDate(startDate, false)
+    : `${formatPlanDate(startDate, false)}〜${formatPlanDate(endDate, false)}`;
   const blockedIngredientIds = blockedIngredientIdsForProfile(profile);
   const effectiveConditions = {
     ...conditions,
+    days: dayCount,
+    mealSlots,
     fridgeIngredientIds: normaliseIngredientIds(profile?.fridge),
     allergyLabels: normaliseAllergyValues(profile?.allergies)
       .map((value) => allergenOptions.find((option) => option.value === value)?.label ?? value),
     appliedPriorities: buildPriorities(conditions, profile),
   };
 
-  if (duration === "meal") {
-    const recipeId = safeRecipeFor(mealType, blockedIngredientIds, planRecipes[mealType] ?? planRecipes.dinner, effectiveConditions);
-    return applyPlanRules({
-      id: `plan-one-${mealType}`,
-      label: `1食分（${cleanMealLabels[mealType]}）`,
-      title: `${cleanMealLabels[mealType]}の献立`,
-      duration: 1,
-      mealSlots: [mealType],
-      reason: "今回選んだ1食だけを作るための献立です。買い物リストもこの料理に必要な食材だけを表示します。",
-      days: [
-        {
-          day: 1,
-          label: "今日",
-          meals: { [mealType]: recipeId },
-        },
-      ],
-    }, blockedIngredientIds, effectiveConditions);
-  }
+  const totalMeals = dayCount * mealSlots.length;
+  const slotLabel = mealSlots.map((slot) => cleanMealLabels[slot]).join("・");
+  const generatedDays = Array.from({ length: dayCount }, (_, dayIndex) => {
+    const date = addDays(startDate, dayIndex);
+    const meals = Object.fromEntries(mealSlots.map((mealType) => {
+      const ranked = rankedRecipesFor(
+        mealType,
+        blockedIngredientIds,
+        effectiveConditions,
+        planRecipes[mealType] ?? [],
+      );
+      const recipeId = ranked[dayIndex % Math.max(ranked.length, 1)]?.id
+        ?? safeRecipeFor(mealType, blockedIngredientIds, planRecipes[mealType] ?? [], effectiveConditions);
+      return [mealType, recipeId];
+    }));
 
-  if (duration === "1day" || Number(conditions?.days) === 1) {
-    return applyPlanRules({
-      ...clone(mealPlans.oneDay),
-      title: "1日分の献立",
-      label: "1日分",
-      mealSlots: ["breakfast", "lunch", "dinner"],
-    }, blockedIngredientIds, effectiveConditions);
-  }
-
-  if (duration === "7days" || Number(conditions?.days) === 7) {
-    const baseDays = daysFromPlan(mealPlans.threeDay);
-    return applyPlanRules({
-      ...clone(mealPlans.threeDay),
-      id: "plan-7-days",
-      title: "1週間分の献立",
-      label: "1週間分",
-      duration: 7,
-      mealSlots: ["breakfast", "lunch", "dinner"],
-      reason: "3日分の献立パターンをもとに、1週間の買い物量を確認するためのレビュー用プランです。",
-      days: Array.from({ length: 7 }, (_, index) => {
-        const source = baseDays[index % baseDays.length] ?? baseDays[0];
-        return {
-          ...clone(source),
-          day: index + 1,
-          label: `${index + 1}日目`,
-        };
-      }),
-    }, blockedIngredientIds, effectiveConditions);
-  }
+    return {
+      day: dayIndex + 1,
+      date: dateInputValue(date),
+      label: formatPlanDate(date),
+      meals,
+    };
+  });
 
   return applyPlanRules({
-    ...clone(mealPlans.threeDay),
-    title: "3日分の献立",
-    label: "3日分",
-    mealSlots: ["breakfast", "lunch", "dinner"],
+    id: `plan-${dateInputValue(startDate)}-${dayCount}-${mealSlots.join("-")}`,
+    title: dayCount === 1 && mealSlots.length === 1
+      ? `${cleanMealLabels[mealSlots[0]]}の献立`
+      : `${dayCount}日分の献立`,
+    label: `${rangeLabel}・${totalMeals}食分`,
+    dateRangeLabel: rangeLabel,
+    duration: dayCount,
+    mealSlots,
+    reason: `${rangeLabel}の${slotLabel}を提案します。買い物リストも、この${totalMeals}食に必要な分だけまとめます。`,
+    days: generatedDays,
   }, blockedIngredientIds, effectiveConditions);
 }
 
@@ -529,6 +558,7 @@ export default function MealMateApp() {
   const [servings, setServings] = useState(1);
   const [tasteNote, setTasteNote] = useState("");
   const [confirmedCookingRecipe, setConfirmedCookingRecipe] = useState(null);
+  const [cookingCompleted, setCookingCompleted] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState([]);
   const [feedbackNote, setFeedbackNote] = useState("");
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
@@ -763,6 +793,7 @@ export default function MealMateApp() {
     setIngredientReplacements({});
     setSelectedRecipeId(firstRecipeId(clonedPlan));
     setConfirmedCookingRecipe(null);
+    setCookingCompleted(false);
     moveTo("mealSuggestion");
   };
 
@@ -856,6 +887,7 @@ export default function MealMateApp() {
     setCheckedItems({});
     setIngredientReplacements({});
     setConfirmedCookingRecipe(null);
+    setCookingCompleted(false);
     setCookingStep(0);
     moveTo("mealSuggestion", "フィードバックを保存して、ホームに戻りました");
   };
@@ -1000,8 +1032,16 @@ export default function MealMateApp() {
         return (
           <MealSuggestion
             plan={activePlan}
+            planConfirmed={planConfirmed}
+            cookingCompleted={cookingCompleted}
             onCreatePlan={() => moveTo("conditionInput")}
             onEditConditions={() => moveTo("conditionInput")}
+            onSelectRecipe={(recipe) => {
+              setSelectedRecipeId(recipe.id);
+              setConfirmedCookingRecipe(null);
+              moveTo("recipeConfirm");
+            }}
+            onFeedback={() => moveTo("feedback")}
             onChangeMeal={(slot) => {
               setEditingSlot(slot);
               moveTo("mealChange");
@@ -1046,7 +1086,7 @@ export default function MealMateApp() {
             onReceiptScan={() => moveTo("receiptScan")}
             onViewRecipes={() => {
               setSelectedRecipeId(firstRecipeId(activePlan));
-              moveTo("recipeConfirm");
+              moveTo("mealSuggestion", "料理を押すとレシピを確認できます");
             }}
             onBack={() => moveTo("mealSuggestion")}
           />
@@ -1110,9 +1150,10 @@ export default function MealMateApp() {
             onStart={(payload) => {
               setConfirmedCookingRecipe(payload?.recipe ?? cookingRecipe);
               setCookingStep(0);
+              setCookingCompleted(false);
               moveTo("cooking");
             }}
-            onBack={() => moveTo("shoppingList")}
+            onBack={() => moveTo("mealSuggestion")}
           />
         );
       case "cooking":
@@ -1122,7 +1163,11 @@ export default function MealMateApp() {
             currentStep={cookingStep}
             tasteNote={tasteNote}
             onNext={setCookingStep}
-            onComplete={() => moveTo("feedback")}
+            onComplete={() => {
+              setCookingCompleted(true);
+              setCookingStep(0);
+              moveTo("mealSuggestion", "調理を完了しました。ほかのレシピも確認できます");
+            }}
             onBack={() => moveTo("recipeConfirm")}
           />
         );
@@ -1135,7 +1180,7 @@ export default function MealMateApp() {
             onToggle={toggleFeedback}
             onFreeTextChange={setFeedbackNote}
             onSubmit={submitFeedback}
-            onBack={() => moveTo("recipeConfirm")}
+            onBack={() => moveTo("mealSuggestion")}
           />
         );
       case "settings":

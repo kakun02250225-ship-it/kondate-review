@@ -49,13 +49,18 @@ function calendarDaysFor(schedule, count = 7) {
   const today = new Date();
   const length = schedule.length || count;
   return Array.from({ length }, (_, index) => {
-    const date = new Date(today);
-    date.setDate(today.getDate() + index);
+    const sourceDate = schedule[index]?.date;
+    const match = String(sourceDate ?? "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const date = match
+      ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+      : new Date(today);
+    if (!match) date.setDate(today.getDate() + index);
     return {
       index,
+      month: date.getMonth() + 1,
       date: date.getDate(),
       weekday: WEEKDAYS[date.getDay()],
-      isToday: index === 0,
+      isToday: date.toDateString() === today.toDateString(),
       hasPlan: Boolean(schedule[index]),
     };
   });
@@ -64,11 +69,15 @@ function calendarDaysFor(schedule, count = 7) {
 export default function MealSuggestion({
   plan,
   activePlan,
+  planConfirmed = false,
+  cookingCompleted = false,
   onChangeMeal,
   onConfirmPlan,
   onConfirm,
   onCreatePlan,
   onEditConditions,
+  onSelectRecipe,
+  onFeedback,
   onBack,
 }) {
   const selectedPlan = plan ?? activePlan;
@@ -180,7 +189,7 @@ export default function MealSuggestion({
                     onClick={() => document.getElementById(`meal-day-${day.index}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
                     type="button"
                   >
-                    <small>{day.weekday}</small>
+                    <small>{day.month}/{day.weekday}</small>
                     <strong>{day.date}</strong>
                     <i aria-hidden="true" />
                   </button>
@@ -232,6 +241,7 @@ export default function MealSuggestion({
                           label={slot.label}
                           meal={recipe}
                           mealLabel={slot.label}
+                          onSelect={() => onSelectRecipe?.(recipe, { dayIndex, mealType: slot.key })}
                           onChange={() =>
                             onChangeMeal?.({
                               dayIndex,
@@ -255,15 +265,34 @@ export default function MealSuggestion({
               ))}
             </div>
 
+            {cookingCompleted && (
+              <section className="post-cooking-card" aria-labelledby="post-cooking-title">
+                <span className="post-cooking-card__icon" aria-hidden="true">✓</span>
+                <div>
+                  <p className="eyebrow">調理完了</p>
+                  <h2 id="post-cooking-title">ほかのレシピもここから確認できます</h2>
+                  <p>上の料理を押すと次のレシピを開けます。献立全体の感想は、好きなタイミングで送れます。</p>
+                  <button className="button button--secondary button--full" onClick={onFeedback} type="button">
+                    献立全体をフィードバック
+                  </button>
+                  <small>このレビュー用プロトタイプでは、1食につき1品として表示しています。</small>
+                </div>
+              </section>
+            )}
+
             <div className="sticky-actions">
               <button
                 className="button button--primary button--large"
                 onClick={() => confirmPlan?.(selectedPlan)}
                 type="button"
               >
-                この献立に決定
+                {planConfirmed ? "買い物リストを見る" : "この献立に決定"}
               </button>
-              <p className="action-help">決定すると、この献立に必要な食材だけを買い物リストで確認できます。</p>
+              <p className="action-help">
+                {planConfirmed
+                  ? "選んだ期間・食事に必要な食材を確認できます。"
+                  : "決定すると、この献立に必要な食材だけを買い物リストで確認できます。"}
+              </p>
             </div>
           </>
         )}

@@ -47,6 +47,7 @@ export function MealCard({
         {showNutrition ? (
           <span className="meal-card__nutrition item-meta">{recipe.kcal} kcal・P {recipe.protein}g</span>
         ) : null}
+        {onSelect ? <span className="meal-card__view">レシピを見る ›</span> : null}
       </div>
       {onChange ? (
         <button type="button" className="meal-card__change change-button" onClick={(event) => { event.stopPropagation(); onChange(recipe); }}>

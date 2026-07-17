@@ -84,7 +84,7 @@ export function IngredientList({
                   {amount ? <span className="ingredient-list__amount ingredient-amount item-meta">{amount}</span> : null}
                   {onUnavailable && item.canBeUnavailable !== false ? (
                     <button type="button" className="ingredient-list__unavailable" onClick={() => onUnavailable(item)}>
-                      購入できなかった
+                      買えなかった
                     </button>
                   ) : null}
                 </li>
