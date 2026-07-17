@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ingredients, recipes } from '../data';
+import { formatCookingTime, ingredients, recipes } from '../data';
 import Header from '../components/Header';
 import IngredientList from '../components/IngredientList';
 
@@ -114,7 +114,7 @@ export default function RecipeConfirm({
             <p className="eyebrow">今日のおすすめ</p>
             <h1 id="recipe-confirm-title">{recipe.name}</h1>
             <div className="recipe-meta" aria-label="レシピ情報">
-              <span>⏱ {recipe.cookingTime ?? 30}分</span>
+              <span>⏱ {formatCookingTime(recipe.cookingTime ?? 30)}</span>
               <span>¥{Number(recipe.price ?? 0).toLocaleString('ja-JP')}</span>
               <span>{recipe.kcal ?? '-'} kcal</span>
             </div>

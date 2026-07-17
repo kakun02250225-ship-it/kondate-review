@@ -1,5 +1,7 @@
 "use client";
 
+import { formatCookingTime } from "../data";
+
 export function MealCard({
   mealLabel,
   label,
@@ -41,7 +43,7 @@ export function MealCard({
         <span className="meal-card__label meal-label">{mealLabel ?? label}</span>
         <h3 className="meal-card__name meal-name">{recipe.name}</h3>
         <span className="meal-card__meta meta-row">
-          <span>⏱ {recipe.cookingTime}分</span>
+          <span>⏱ {formatCookingTime(recipe.cookingTime)}</span>
           <span>約{recipe.price}円</span>
         </span>
         {showNutrition ? (

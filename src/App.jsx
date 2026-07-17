@@ -68,8 +68,8 @@ const cleanMealLabels = {
 
 const planRecipes = {
   breakfast: ["recipe-8", "recipe-9"],
-  lunch: ["recipe-20", "recipe-19", "recipe-15", "recipe-11", "recipe-5", "recipe-12", "recipe-2", "recipe-6", "recipe-16", "recipe-21", "recipe-22"],
-  dinner: ["recipe-17", "recipe-16", "recipe-22", "recipe-14", "recipe-18", "recipe-1", "recipe-13", "recipe-10", "recipe-20", "recipe-21", "recipe-3", "recipe-4"],
+  lunch: ["recipe-20", "recipe-19", "recipe-15", "recipe-11", "recipe-5", "recipe-12", "recipe-2", "recipe-6", "recipe-16", "recipe-21", "recipe-22", "recipe-24", "recipe-26"],
+  dinner: ["recipe-17", "recipe-16", "recipe-22", "recipe-14", "recipe-18", "recipe-1", "recipe-13", "recipe-10", "recipe-20", "recipe-21", "recipe-3", "recipe-4", "recipe-23", "recipe-24", "recipe-25", "recipe-26"],
 };
 
 function listValues(value) {
@@ -194,9 +194,13 @@ function scoreRecipe(recipe, conditions = {}, preferredIds = []) {
   if (preferredIndex >= 0) score += Math.max(0, 14 - preferredIndex);
   if (maxCookTime) {
     const recipeTime = Number(recipe.cookingTime ?? 0);
-    score += recipeTime <= maxCookTime ? 70 : -100;
+    const fitsSelectedTime = recipeTime <= maxCookTime;
+    score += fitsSelectedTime ? 70 : -100;
     if (maxCookTime <= 15) score += Math.max(0, maxCookTime - recipeTime);
-    if (maxCookTime >= 60) score += Math.min(18, Math.max(0, recipeTime - 10) * 0.9);
+    if (maxCookTime >= 45 && fitsSelectedTime) {
+      const timeGap = maxCookTime - recipeTime;
+      score += timeGap === 0 ? 100 : Math.max(0, 50 - timeGap * 2);
+    }
   }
   if (budget) {
     const perMealBudget = budget / mealCountFromConditions(conditions);

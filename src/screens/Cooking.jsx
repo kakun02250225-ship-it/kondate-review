@@ -1,4 +1,4 @@
-import { recipes } from '../data';
+import { formatCookingTime, recipes } from '../data';
 import Header from '../components/Header';
 import IngredientList from '../components/IngredientList';
 
@@ -31,7 +31,7 @@ export default function Cooking({
           <span className="cooking-timer__icon" aria-hidden="true">⏱</span>
           <div>
             <p>調理時間の目安</p>
-            <strong>{timerLabel ?? `約${recipe.cookingTime ?? 30}分`}</strong>
+            <strong>{timerLabel ?? `約${formatCookingTime(recipe.cookingTime ?? 30)}`}</strong>
           </div>
         </div>
 

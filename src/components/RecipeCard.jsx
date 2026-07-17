@@ -1,5 +1,7 @@
 "use client";
 
+import { formatCookingTime } from "../data";
+
 const formatYen = (value) => typeof value === "number" ? `${value.toLocaleString("ja-JP")}円` : value;
 
 export function RecipeCard({
@@ -46,7 +48,7 @@ export function RecipeCard({
       <div className="recipe-card__media recipe-card__image-wrap recipe-image-wrap">
         <img className="recipe-card__image recipe-image" src={recipe.image} alt={recipe.imageAlt ?? recipe.name} loading={imageLoading} />
         {recipe.cookingTime != null ? (
-          <span className="recipe-card__time">⏱ {recipe.cookingTime}分</span>
+          <span className="recipe-card__time">⏱ {formatCookingTime(recipe.cookingTime)}</span>
         ) : null}
       </div>
       <div className="recipe-card__body">
