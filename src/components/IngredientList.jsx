@@ -37,6 +37,7 @@ export function IngredientList({
   onToggleItem,
   onUnavailable,
   servings = 1,
+  inlineAmounts = false,
   showCheckboxes,
   showUsedIn = false,
   emptyMessage = "食材はありません",
@@ -76,12 +77,15 @@ export function IngredientList({
                     />
                   ) : null}
                   <span className="ingredient-list__name-wrap ingredient-item__content item-copy">
-                    <strong className="ingredient-name item-name">{item.name}</strong>
+                    <strong className="ingredient-name item-name">
+                      {item.name}
+                      {inlineAmounts && amount ? <span className="ingredient-name__amount">（{amount}）</span> : null}
+                    </strong>
                     {showUsedIn && item.usedIn?.length ? (
                       <small className="used-in">{item.usedIn.join("・")}</small>
                     ) : null}
                   </span>
-                  {amount ? <span className="ingredient-list__amount ingredient-amount item-meta">{amount}</span> : null}
+                  {amount && !inlineAmounts ? <span className="ingredient-list__amount ingredient-amount item-meta">{amount}</span> : null}
                   {onUnavailable && item.canBeUnavailable !== false ? (
                     <button type="button" className="ingredient-list__unavailable" onClick={() => onUnavailable(item)}>
                       買えなかった

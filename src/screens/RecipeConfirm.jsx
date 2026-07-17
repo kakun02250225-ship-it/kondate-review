@@ -158,7 +158,7 @@ export default function RecipeConfirm({
               <h2 id="ingredients-title">{displayedServings}人分の材料</h2>
             </div>
           </div>
-          <IngredientList ingredients={adjustedIngredients} servings={displayedServings} />
+          <IngredientList ingredients={adjustedIngredients} inlineAmounts servings={displayedServings} />
           {(saltiness !== 3 || richness !== 3) && (
             <p className="form-help">
               味スライダーに合わせて、ポン酢・しょうゆ・みそ・油・マヨネーズなどの調味料だけを割合変更しています。

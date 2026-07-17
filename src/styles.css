@@ -2932,6 +2932,61 @@ button.calendar-day {
   line-height: 1.45;
 }
 
+.ingredient-name__amount {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.cooking-ingredients {
+  display: grid;
+  gap: 12px;
+}
+
+.cooking-ingredients .section-heading {
+  margin-bottom: 0;
+}
+
+.cooking-all-steps {
+  display: grid;
+  gap: 12px;
+}
+
+.cooking-all-steps .section-heading {
+  margin-bottom: 0;
+}
+
+.cooking-step-list {
+  gap: 10px;
+}
+
+.recipe-steps .cooking-step-card {
+  align-items: start;
+  padding: 15px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.cooking-step-card > div {
+  min-width: 0;
+}
+
+.cooking-step-card small {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--orange-dark);
+  font-size: 9px;
+  font-weight: 850;
+}
+
+.cooking-step-card p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
 @media (max-width: 520px) {
   html,
   body {

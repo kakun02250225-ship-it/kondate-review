@@ -554,7 +554,6 @@ export default function MealMateApp() {
   const [hasScannedReceipt, setHasScannedReceipt] = useState(false);
   const [inventory, setInventory] = useState(initialProfile.fridge);
   const [selectedRecipeId, setSelectedRecipeId] = useState(() => recipes[0]?.id);
-  const [cookingStep, setCookingStep] = useState(0);
   const [servings, setServings] = useState(1);
   const [tasteNote, setTasteNote] = useState("");
   const [confirmedCookingRecipe, setConfirmedCookingRecipe] = useState(null);
@@ -888,7 +887,6 @@ export default function MealMateApp() {
     setIngredientReplacements({});
     setConfirmedCookingRecipe(null);
     setCookingCompleted(false);
-    setCookingStep(0);
     moveTo("mealSuggestion", "フィードバックを保存して、ホームに戻りました");
   };
 
@@ -1149,7 +1147,6 @@ export default function MealMateApp() {
             onTasteNoteChange={setTasteNote}
             onStart={(payload) => {
               setConfirmedCookingRecipe(payload?.recipe ?? cookingRecipe);
-              setCookingStep(0);
               setCookingCompleted(false);
               moveTo("cooking");
             }}
@@ -1160,12 +1157,10 @@ export default function MealMateApp() {
         return (
           <Cooking
             recipe={confirmedCookingRecipe ?? cookingRecipe}
-            currentStep={cookingStep}
+            servings={servings}
             tasteNote={tasteNote}
-            onNext={setCookingStep}
             onComplete={() => {
               setCookingCompleted(true);
-              setCookingStep(0);
               moveTo("mealSuggestion", "調理を完了しました。ほかのレシピも確認できます");
             }}
             onBack={() => moveTo("recipeConfirm")}
