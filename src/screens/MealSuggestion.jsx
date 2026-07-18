@@ -313,7 +313,7 @@ export default function MealSuggestion({
                   <h2 id="post-cooking-title">ほかのレシピもここから確認できます</h2>
                   <p>上の料理を押すと次のレシピを開けます。献立全体の感想は、好きなタイミングで送れます。</p>
                   <button className="button button--secondary button--full" onClick={onFeedback} type="button">
-                    献立全体をフィードバック
+                    料理ごとにフィードバック
                   </button>
                   <small>このレビュー用プロトタイプでは、1食につき1品として表示しています。</small>
                 </div>

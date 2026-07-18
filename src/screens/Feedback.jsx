@@ -11,6 +11,7 @@ function normaliseOption(option, index) {
 }
 
 export default function Feedback({
+  recipe,
   options = feedbackOptions,
   selectedFeedback,
   freeText,
@@ -54,17 +55,21 @@ export default function Feedback({
   return (
     <section className="screen feedback-screen" aria-labelledby="feedback-title">
       <Header
-        title="食後のフィードバック"
-        subtitle="感じたことを教えてください"
+        title="料理ごとのフィードバック"
+        subtitle="この料理だけについて答えます"
         onBack={onBack}
       />
 
       <form className="screen-body screen-content" onSubmit={submitFeedback}>
         <div className="feedback-intro">
-          <span className="feedback-intro__icon" aria-hidden="true">🍽️</span>
+          {recipe?.image ? (
+            <img className="feedback-intro__image" src={recipe.image} alt="" />
+          ) : (
+            <span className="feedback-intro__icon" aria-hidden="true">🍽️</span>
+          )}
           <div>
-            <p className="eyebrow">次の献立をもっとあなた好みに</p>
-            <h1 id="feedback-title">今日の料理はいかがでしたか？</h1>
+            <p className="eyebrow">回答する料理</p>
+            <h1 id="feedback-title">{recipe?.name ?? "今日の料理"}はいかがでしたか？</h1>
             <p>当てはまるものをすべて選べます。</p>
           </div>
         </div>
@@ -118,9 +123,9 @@ export default function Feedback({
 
         <div className="sticky-actions">
           <button className="button button--primary button--large button--full primary-button full-width" type="submit">
-            フィードバックを送る
+            この料理の感想を送る
           </button>
-          <p className="action-help">このプロトタイプでは実際の学習処理は行いません</p>
+          <p className="action-help">送信後はレシピ一覧へ戻ります。ほかの料理は別々に回答できます。</p>
         </div>
       </form>
     </section>

@@ -2298,6 +2298,14 @@ textarea:focus {
   font-size: 23px;
 }
 
+.feedback-intro__image {
+  width: 48px;
+  height: 48px;
+  display: block;
+  object-fit: cover;
+  border-radius: 15px;
+}
+
 .feedback-intro h1 {
   margin: 0;
   font-size: 21px;
@@ -2822,6 +2830,36 @@ button.calendar-day {
   margin-bottom: 18px;
 }
 
+.recipe-list-progress {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.recipe-list-progress > span {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 2px 4px;
+  padding: 11px;
+  color: var(--muted);
+  background: var(--cream);
+  border-radius: 13px;
+  font-size: 10px;
+}
+
+.recipe-list-progress strong {
+  color: var(--orange-dark);
+  font-size: 18px;
+}
+
+.recipe-list-progress small {
+  grid-column: 1 / -1;
+  font-size: 9px;
+  font-weight: 800;
+}
+
 .recipe-list-days,
 .recipe-direct-list {
   display: grid;
@@ -2835,23 +2873,32 @@ button.calendar-day {
 .recipe-direct-card {
   width: 100%;
   min-height: 82px;
-  display: grid;
-  grid-template-columns: 74px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 11px;
-  padding: 9px;
+  overflow: hidden;
   text-align: left;
   color: var(--ink);
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 16px;
   box-shadow: var(--shadow-sm);
-  cursor: pointer;
 }
 
 .recipe-direct-card.is-selected {
   background: #fff9f4;
   border-color: #f3b58f;
+}
+
+.recipe-direct-card__open {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 9px;
+  text-align: left;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
 }
 
 .recipe-direct-card img {
@@ -2892,6 +2939,40 @@ button.calendar-day {
   font-size: 9px;
   font-weight: 850;
   white-space: nowrap;
+}
+
+.recipe-direct-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 40px;
+  padding: 7px 10px;
+  background: #faf7f3;
+  border-top: 1px solid #f0e7de;
+}
+
+.recipe-direct-card__footer > small,
+.recipe-status {
+  color: var(--soft);
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.recipe-status.is-complete {
+  color: var(--green);
+}
+
+.recipe-feedback-button {
+  min-height: 30px;
+  padding: 5px 9px;
+  color: var(--orange-dark);
+  background: #fff;
+  border: 1px solid #f0c3a6;
+  border-radius: 9px;
+  font-size: 9px;
+  font-weight: 850;
+  cursor: pointer;
 }
 
 .meal-day {

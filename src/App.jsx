@@ -578,6 +578,9 @@ export default function MealMateApp() {
   const [selectedFeedback, setSelectedFeedback] = useState([]);
   const [feedbackNote, setFeedbackNote] = useState("");
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [feedbackTargetRecipeId, setFeedbackTargetRecipeId] = useState(null);
+  const [feedbackByRecipe, setFeedbackByRecipe] = useState({});
+  const [completedRecipeIds, setCompletedRecipeIds] = useState([]);
   const [personalizationApplied, setPersonalizationApplied] = useState(false);
   const [notice, setNotice] = useState("");
   const [editingSetting, setEditingSetting] = useState(null);
@@ -601,6 +604,7 @@ export default function MealMateApp() {
   );
 
   const selectedRecipe = recipeMap[selectedRecipeId] ?? recipeMap[firstRecipeId(activePlan)] ?? recipes[0];
+  const feedbackTargetRecipe = recipeMap[feedbackTargetRecipeId] ?? selectedRecipe;
 
   const mealChangeCandidates = useMemo(() => {
     if (!editingSlot?.mealType) return [];
@@ -810,6 +814,9 @@ export default function MealMateApp() {
     setSelectedRecipeId(firstRecipeId(clonedPlan));
     setConfirmedCookingRecipe(null);
     setCookingCompleted(false);
+    setCompletedRecipeIds([]);
+    setFeedbackByRecipe({});
+    setFeedbackTargetRecipeId(null);
     moveTo("mealSuggestion");
   };
 
@@ -895,16 +902,29 @@ export default function MealMateApp() {
     setFeedbackSubmitted(false);
   };
 
+  const openRecipeFeedback = (recipeId) => {
+    const targetId = recipeId ?? selectedRecipeId;
+    const savedFeedback = feedbackByRecipe[targetId];
+    setFeedbackTargetRecipeId(targetId);
+    setSelectedFeedback(savedFeedback?.selectedFeedback ?? []);
+    setFeedbackNote(savedFeedback?.freeText ?? "");
+    setFeedbackSubmitted(Boolean(savedFeedback));
+    moveTo("feedback");
+  };
+
   const submitFeedback = () => {
+    const targetId = feedbackTargetRecipeId ?? selectedRecipeId;
+    setFeedbackByRecipe((previous) => ({
+      ...previous,
+      [targetId]: {
+        selectedFeedback: [...selectedFeedback],
+        freeText: feedbackNote,
+        submittedAt: new Date().toISOString(),
+      },
+    }));
     setFeedbackSubmitted(true);
     setPersonalizationApplied(true);
-    setActivePlan(null);
-    setPlanConfirmed(false);
-    setCheckedItems({});
-    setIngredientReplacements({});
-    setConfirmedCookingRecipe(null);
-    setCookingCompleted(false);
-    moveTo("mealSuggestion", "フィードバックを保存して、ホームに戻りました");
+    moveTo("recipeList", `${recipeMap[targetId]?.name ?? "料理"}の感想を保存しました`);
   };
 
   const closeSetting = () => {
@@ -1061,7 +1081,7 @@ export default function MealMateApp() {
               moveTo("recipeConfirm");
             }}
             onViewRecipes={() => moveTo("recipeList")}
-            onFeedback={() => moveTo("feedback")}
+            onFeedback={() => moveTo("recipeList", "調理した料理ごとに感想を送れます")}
             onChangeMeal={(slot) => {
               setEditingSlot(slot);
               moveTo("mealChange");
@@ -1179,8 +1199,11 @@ export default function MealMateApp() {
       case "recipeList":
         return (
           <RecipeList
+            completedRecipeIds={completedRecipeIds}
+            feedbackByRecipe={feedbackByRecipe}
             plan={activePlan}
             selectedRecipeId={selectedRecipeId}
+            onFeedbackRecipe={(recipe) => openRecipeFeedback(recipe.id)}
             onSelectRecipe={(recipe) => {
               setSelectedRecipeId(recipe.id);
               setConfirmedCookingRecipe(null);
@@ -1195,9 +1218,10 @@ export default function MealMateApp() {
             recipe={confirmedCookingRecipe ?? cookingRecipe}
             servings={servings}
             tasteNote={tasteNote}
-            onComplete={() => {
+            onComplete={(recipe) => {
+              setCompletedRecipeIds((previous) => [...new Set([...previous, recipe.id])]);
               setCookingCompleted(true);
-              moveTo("recipeList", "調理を完了しました。次に見るレシピを自由に選べます");
+              moveTo("recipeList", "調理を完了しました。この料理の感想を一覧から送れます");
             }}
             onChooseRecipe={() => moveTo("recipeList")}
             onBack={() => moveTo("recipeConfirm")}
@@ -1206,13 +1230,14 @@ export default function MealMateApp() {
       case "feedback":
         return (
           <Feedback
+            recipe={feedbackTargetRecipe}
             selectedFeedback={selectedFeedback}
             freeText={feedbackNote}
             isSubmitted={feedbackSubmitted}
             onToggle={toggleFeedback}
             onFreeTextChange={setFeedbackNote}
             onSubmit={submitFeedback}
-            onBack={() => moveTo("mealSuggestion")}
+            onBack={() => moveTo("recipeList")}
           />
         );
       case "settings":
