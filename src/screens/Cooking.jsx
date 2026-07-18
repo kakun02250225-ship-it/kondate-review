@@ -12,6 +12,7 @@ export default function Cooking({
   timerLabel,
   tasteNote,
   onComplete,
+  onChooseRecipe,
   onBack,
 }) {
   const steps = (recipe?.steps ?? []).map(stepLabel).filter(Boolean);
@@ -81,6 +82,9 @@ export default function Cooking({
             onClick={() => onComplete?.(recipe)}
           >
             調理を完了してレシピ一覧へ
+          </button>
+          <button className="button button--secondary button--full" onClick={onChooseRecipe} type="button">
+            別のレシピを選ぶ
           </button>
           <p className="action-help">途中の手順は上下にスクロールしていつでも見返せます。</p>
         </div>

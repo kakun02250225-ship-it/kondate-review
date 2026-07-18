@@ -13,6 +13,7 @@ export function MealCard({
   showNutrition = true,
   className = "",
   selected = false,
+  timeMatchLabel = "",
 }) {
   const recipe = recipeProp ?? meal;
   if (!recipe) return null;
@@ -40,7 +41,10 @@ export function MealCard({
         <img src={recipe.image} alt="" loading="lazy" />
       </div>
       <div className="meal-card__content meal-info">
-        <span className="meal-card__label meal-label">{mealLabel ?? label}</span>
+        <div className="meal-card__label-row">
+          <span className="meal-card__label meal-label">{mealLabel ?? label}</span>
+          {timeMatchLabel ? <span className="meal-card__time-match">{timeMatchLabel}</span> : null}
+        </div>
         <h3 className="meal-card__name meal-name">{recipe.name}</h3>
         <span className="meal-card__meta meta-row">
           <span>⏱ {formatCookingTime(recipe.cookingTime)}</span>

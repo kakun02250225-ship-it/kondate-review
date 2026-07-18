@@ -1,6 +1,6 @@
 import Header from "../components/Header";
 import MealCard from "../components/MealCard";
-import { recipes } from "../data";
+import { formatCookingTime, recipes } from "../data";
 
 const MEAL_SLOTS = [
   { key: "breakfast", label: "朝ごはん", icon: "☀️", aliases: ["morning", "朝食", "朝"] },
@@ -76,6 +76,7 @@ export default function MealSuggestion({
   onConfirm,
   onCreatePlan,
   onEditConditions,
+  onViewRecipes,
   onSelectRecipe,
   onFeedback,
   onBack,
@@ -87,6 +88,15 @@ export default function MealSuggestion({
   const summary = formatSummary(selectedPlan, schedule, recipeMap, visibleSlots);
   const confirmPlan = onConfirmPlan ?? onConfirm;
   const calendarDays = calendarDaysFor(schedule);
+  const requestedCookTime = Number(selectedPlan?.requestedCookTime ?? 0);
+  const exactTimeRecipes = requestedCookTime >= 45
+    ? [...new Map(
+      schedule
+        .flatMap((day) => visibleSlots.map((slot) => recipeMap.get(mealIdFor(day, slot))))
+        .filter((recipe) => Number(recipe?.cookingTime ?? 0) === requestedCookTime)
+        .map((recipe) => [recipe.id, recipe]),
+    ).values()]
+    : [];
 
   return (
     <section className="screen meal-suggestion-screen">
@@ -157,6 +167,9 @@ export default function MealSuggestion({
               <button className="recommendation-hero__edit" onClick={onEditConditions} type="button">
                 作る範囲・希望を変更
               </button>
+              <button className="recommendation-hero__recipes" onClick={onViewRecipes} type="button">
+                レシピ一覧から選ぶ ›
+              </button>
             </div>
 
             <section className="priority-summary" aria-label="献立で優先した条件">
@@ -173,6 +186,30 @@ export default function MealSuggestion({
                 ))}
               </ol>
             </section>
+
+            {requestedCookTime >= 45 && (
+              <section className="time-match-summary" aria-label="時間条件に一致した料理">
+                <div className="time-match-summary__heading">
+                  <span aria-hidden="true">⏱</span>
+                  <div>
+                    <span className="eyebrow">時間条件に一致</span>
+                    <h2>{formatCookingTime(requestedCookTime)}の料理を上位表示</h2>
+                  </div>
+                </div>
+                {exactTimeRecipes.length ? (
+                  <ul>
+                    {exactTimeRecipes.map((recipe) => (
+                      <li key={recipe.id}>{recipe.name}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>アレルギーなどの条件に合う料理がないため、短い時間の候補を表示しています。</p>
+                )}
+                {visibleSlots.some((slot) => slot.key === "breakfast") && (
+                  <small>朝食は食べやすさを優先し、短時間の料理にしています。</small>
+                )}
+              </section>
+            )}
 
             <section className="calendar-overview" aria-label="献立の日付一覧">
               <div className="section-heading">
@@ -241,6 +278,9 @@ export default function MealSuggestion({
                           label={slot.label}
                           meal={recipe}
                           mealLabel={slot.label}
+                          timeMatchLabel={requestedCookTime >= 45 && Number(recipe.cookingTime) === requestedCookTime
+                            ? `${formatCookingTime(requestedCookTime)}条件に一致`
+                            : ""}
                           onSelect={() => onSelectRecipe?.(recipe, { dayIndex, mealType: slot.key })}
                           onChange={() =>
                             onChangeMeal?.({

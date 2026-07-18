@@ -2094,6 +2094,8 @@ textarea:focus {
 
 .date-meal-label {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 7px;
   margin-bottom: 12px;
 }
@@ -2105,6 +2107,19 @@ textarea:focus {
   border-radius: 8px;
   font-size: 10px;
   font-weight: 800;
+}
+
+.date-meal-label button {
+  min-height: 34px;
+  margin-left: auto;
+  padding: 6px 9px;
+  color: var(--orange-dark);
+  background: #fff;
+  border: 1px solid #f2c7ac;
+  border-radius: 9px;
+  font-size: 9px;
+  font-weight: 850;
+  cursor: pointer;
 }
 
 .recipe-hero__body {
@@ -2708,7 +2723,7 @@ button.calendar-day {
 }
 
 .recommendation-hero__edit {
-  grid-column: 1 / -1;
+  grid-column: 1;
   justify-self: start;
   padding: 7px 0;
   color: var(--orange-dark);
@@ -2717,6 +2732,166 @@ button.calendar-day {
   font-weight: 800;
   text-decoration: underline;
   cursor: pointer;
+}
+
+.recommendation-hero__recipes {
+  grid-column: 2;
+  align-self: center;
+  justify-self: end;
+  min-height: 38px;
+  padding: 8px 12px;
+  color: #fff;
+  background: var(--orange);
+  border: 0;
+  border-radius: 11px;
+  font-size: 10px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.meal-card__label-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  margin-bottom: 3px;
+}
+
+.meal-card__label-row .meal-label {
+  margin-bottom: 0;
+}
+
+.meal-card__time-match {
+  padding: 2px 5px;
+  color: #236249;
+  background: #e9f7ef;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 850;
+}
+
+.time-match-summary {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 14px;
+  background: #f0f8f3;
+  border: 1px solid #cfe8d8;
+  border-radius: 17px;
+}
+
+.time-match-summary__heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.time-match-summary__heading > span {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  border-radius: 10px;
+}
+
+.time-match-summary h2 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.time-match-summary ul {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding-left: 19px;
+  color: #315f4d;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.time-match-summary p,
+.time-match-summary small {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.recipe-list-intro {
+  margin-bottom: 18px;
+}
+
+.recipe-list-days,
+.recipe-direct-list {
+  display: grid;
+  gap: 10px;
+}
+
+.recipe-list-day + .recipe-list-day {
+  margin-top: 22px;
+}
+
+.recipe-direct-card {
+  width: 100%;
+  min-height: 82px;
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 9px;
+  text-align: left;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+.recipe-direct-card.is-selected {
+  background: #fff9f4;
+  border-color: #f3b58f;
+}
+
+.recipe-direct-card img {
+  width: 74px;
+  height: 64px;
+  display: block;
+  object-fit: cover;
+  border-radius: 11px;
+}
+
+.recipe-direct-card__body {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.recipe-direct-card__body small {
+  color: var(--orange-dark);
+  font-size: 9px;
+  font-weight: 850;
+}
+
+.recipe-direct-card__body strong {
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recipe-direct-card__body > span {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.recipe-direct-card__action {
+  color: var(--orange-dark);
+  font-size: 9px;
+  font-weight: 850;
+  white-space: nowrap;
 }
 
 .meal-day {

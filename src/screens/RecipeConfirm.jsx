@@ -55,6 +55,7 @@ export default function RecipeConfirm({
   onServingsChange,
   onTasteNoteChange,
   onStart,
+  onChooseRecipe,
   onBack,
 }) {
   const [localServings, setLocalServings] = useState(2);
@@ -100,6 +101,7 @@ export default function RecipeConfirm({
         <div className="date-meal-label">
           <span>{dateLabel}</span>
           <span>{mealType}</span>
+          <button type="button" onClick={onChooseRecipe}>ほかのレシピを選ぶ</button>
         </div>
 
         <article className="recipe-hero">

@@ -34,7 +34,7 @@ test("server-renders the meal-planning prototype", async () => {
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/i);
 });
 
-test("keeps all 13 review screens and fixed-data modules", async () => {
+test("keeps all 14 review screens and fixed-data modules", async () => {
   const [appSource, dataSource, packageSource, screenFiles] = await Promise.all([
     readFile(new URL("../src/App.jsx", import.meta.url), "utf8"),
     readFile(new URL("../src/data.js", import.meta.url), "utf8"),
@@ -54,6 +54,7 @@ test("keeps all 13 review screens and fixed-data modules", async () => {
       "ReMealSuggestion.jsx",
       "ReceiptScan.jsx",
       "RecipeConfirm.jsx",
+      "RecipeList.jsx",
       "Settings.jsx",
       "ShoppingList.jsx",
       "SubstituteSuggestion.jsx",

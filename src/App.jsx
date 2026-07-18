@@ -12,6 +12,7 @@ import UnavailableIngredient from "./screens/UnavailableIngredient";
 import SubstituteSuggestion from "./screens/SubstituteSuggestion";
 import ReMealSuggestion from "./screens/ReMealSuggestion";
 import ReceiptScan from "./screens/ReceiptScan";
+import RecipeList from "./screens/RecipeList";
 import RecipeConfirm from "./screens/RecipeConfirm";
 import Cooking from "./screens/Cooking";
 import Feedback from "./screens/Feedback";
@@ -242,12 +243,22 @@ function scoreRecipe(recipe, conditions = {}, preferredIds = []) {
 }
 
 function rankedRecipesFor(mealType, blockedIngredientIds, conditions = {}, preferredIds = []) {
+  const requestedCookTime = Number(conditions?.cookTime ?? 0);
   return recipes
     .filter((recipe) => (
       supportsMealType(recipe, mealType)
       && !recipeHasIngredients(recipe, blockedIngredientIds)
     ))
-    .sort((a, b) => scoreRecipe(b, conditions, preferredIds) - scoreRecipe(a, conditions, preferredIds));
+    .sort((a, b) => {
+      // 45分・1時間を選んだときは、その時間を使う料理を確実に先頭へ出す。
+      // アレルギー除外は上の filter で先に適用される。
+      if (requestedCookTime >= 45) {
+        const aIsExactMatch = Number(a.cookingTime ?? 0) === requestedCookTime;
+        const bIsExactMatch = Number(b.cookingTime ?? 0) === requestedCookTime;
+        if (aIsExactMatch !== bIsExactMatch) return aIsExactMatch ? -1 : 1;
+      }
+      return scoreRecipe(b, conditions, preferredIds) - scoreRecipe(a, conditions, preferredIds);
+    });
 }
 
 function safeRecipeFor(mealType, blockedIngredientIds, preferredIds = [], conditions = {}) {
@@ -364,12 +375,14 @@ function applyPlanRules(plan, blockedIngredientIds, conditions) {
     .map((id) => ingredients.find((ingredient) => ingredient.id === id)?.name)
     .filter(Boolean);
   nextPlan.excludedAllergyIngredientIds = blockedIngredientIds;
+  nextPlan.requestedCookTime = conditions?.cookTime ? Number(conditions.cookTime) : null;
   if (allergyNames.length) {
     nextPlan.allergyNote = `アレルギー食材（${allergyNames.join("、")}）を含む料理は外しています。`;
   }
   if (conditions?.cookTime) {
-    nextPlan.timeNote = Number(conditions.cookTime) === 60
-      ? "1時間以内で、最短時間だけに偏らず作りごたえのある料理も優先しています。"
+    const timeLabel = Number(conditions.cookTime) === 60 ? "1時間" : `${conditions.cookTime}分`;
+    nextPlan.timeNote = Number(conditions.cookTime) >= 45
+      ? `${timeLabel}を選んだため、昼・夜は${timeLabel}ちょうどの作りごたえがある料理を先に表示しています。朝食は短時間の料理を提案します。`
       : `調理時間は${conditions.cookTime}分以内を優先しています。`;
   }
   nextPlan.appliedPriorities = conditions?.appliedPriorities ?? [];
@@ -502,7 +515,7 @@ function navIdForScreen(screen) {
   if (["shoppingList", "unavailableIngredient", "substituteSuggestion", "reMealSuggestion", "receiptScan"].includes(screen)) {
     return "shopping";
   }
-  if (["recipeConfirm", "cooking", "feedback"].includes(screen)) return "recipes";
+  if (["recipeList", "recipeConfirm", "cooking", "feedback"].includes(screen)) return "recipes";
   if (screen === "settings") return "settings";
   if (screen === "conditionInput") return "create";
   return "home";
@@ -512,7 +525,7 @@ function resolveNavTarget(rawId) {
   const id = String(rawId ?? "").toLowerCase();
   if (id.includes("setting") || id.includes("設定")) return "settings";
   if (id.includes("shop") || id.includes("買")) return "shoppingList";
-  if (id.includes("recipe") || id.includes("レシピ")) return "recipeConfirm";
+  if (id.includes("recipe") || id.includes("レシピ")) return "recipeList";
   if (id.includes("create") || id.includes("plan") || id.includes("献立作成")) return "conditionInput";
   return "mealSuggestion";
 }
@@ -993,13 +1006,17 @@ export default function MealMateApp() {
   const onNavChange = (value) => {
     const id = typeof value === "object" ? value.id ?? value.value ?? value.label : value;
     const target = resolveNavTarget(id);
-    if ((target === "shoppingList" || target === "recipeConfirm") && !planConfirmed) {
+    if (target === "shoppingList" && !planConfirmed) {
       moveTo(
         "mealSuggestion",
         activePlan
           ? "買い物リストを見る前に、この献立に決定してください"
           : "献立を決めると、必要な食材と使う料理がここにまとまります",
       );
+      return;
+    }
+    if (target === "recipeList" && !activePlan) {
+      moveTo("mealSuggestion", "献立を作ると、ここから好きなレシピを選べます");
       return;
     }
     moveTo(target);
@@ -1043,6 +1060,7 @@ export default function MealMateApp() {
               setConfirmedCookingRecipe(null);
               moveTo("recipeConfirm");
             }}
+            onViewRecipes={() => moveTo("recipeList")}
             onFeedback={() => moveTo("feedback")}
             onChangeMeal={(slot) => {
               setEditingSlot(slot);
@@ -1088,7 +1106,7 @@ export default function MealMateApp() {
             onReceiptScan={() => moveTo("receiptScan")}
             onViewRecipes={() => {
               setSelectedRecipeId(firstRecipeId(activePlan));
-              moveTo("mealSuggestion", "料理を押すとレシピを確認できます");
+              moveTo("recipeList");
             }}
             onBack={() => moveTo("mealSuggestion")}
           />
@@ -1154,6 +1172,20 @@ export default function MealMateApp() {
               setCookingCompleted(false);
               moveTo("cooking");
             }}
+            onChooseRecipe={() => moveTo("recipeList")}
+            onBack={() => moveTo("recipeList")}
+          />
+        );
+      case "recipeList":
+        return (
+          <RecipeList
+            plan={activePlan}
+            selectedRecipeId={selectedRecipeId}
+            onSelectRecipe={(recipe) => {
+              setSelectedRecipeId(recipe.id);
+              setConfirmedCookingRecipe(null);
+              moveTo("recipeConfirm");
+            }}
             onBack={() => moveTo("mealSuggestion")}
           />
         );
@@ -1165,8 +1197,9 @@ export default function MealMateApp() {
             tasteNote={tasteNote}
             onComplete={() => {
               setCookingCompleted(true);
-              moveTo("mealSuggestion", "調理を完了しました。ほかのレシピも確認できます");
+              moveTo("recipeList", "調理を完了しました。次に見るレシピを自由に選べます");
             }}
+            onChooseRecipe={() => moveTo("recipeList")}
             onBack={() => moveTo("recipeConfirm")}
           />
         );
