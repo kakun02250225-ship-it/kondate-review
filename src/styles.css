@@ -1531,6 +1531,14 @@ textarea:focus {
   margin-top: 22px;
 }
 
+.form-actions--split {
+  grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
+}
+
+.form-actions--split .button--text {
+  grid-column: 1 / -1;
+}
+
 .recommendation-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
