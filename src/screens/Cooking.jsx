@@ -70,6 +70,7 @@ export default function Cooking({
                   <small>手順 {index + 1}</small>
                   <p>{step}</p>
                 </div>
+                <strong className="cooking-step-card__progress">{index + 1}/{steps.length}</strong>
               </li>
             ))}
           </ol>
@@ -92,3 +93,4 @@ export default function Cooking({
     </section>
   );
 }
+
