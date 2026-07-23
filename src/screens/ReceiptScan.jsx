@@ -1,9 +1,22 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { receiptItems } from '../data';
 import Header from '../components/Header';
 
 function itemLabel(item) {
   return typeof item === 'string' ? item : item?.name ?? item?.label ?? '';
+}
+
+function editableItem(item, index) {
+  if (typeof item === 'string') {
+    return { id: `receipt-${index}`, name: item, amount: '', ingredientId: null };
+  }
+
+  return {
+    ...item,
+    id: item?.id ?? `receipt-${index}`,
+    name: itemLabel(item),
+    amount: item?.amount ?? item?.quantity ?? '',
+  };
 }
 
 export default function ReceiptScan({
@@ -15,11 +28,20 @@ export default function ReceiptScan({
 }) {
   const [localHasScanned, setLocalHasScanned] = useState(false);
   const [isReading, setIsReading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftItems, setDraftItems] = useState(() => items.map(editableItem));
   const scanned = hasScanned ?? localHasScanned;
-  const scannedItems = items.filter((item) => itemLabel(item));
+  const scannedItems = draftItems.filter((item) => itemLabel(item));
+  const visibleResultItems = isEditing ? draftItems : scannedItems;
+
+  useEffect(() => {
+    setDraftItems(items.map(editableItem));
+  }, [items]);
 
   const handleScan = () => {
     setIsReading(true);
+    setIsEditing(false);
+    setDraftItems(items.map(editableItem));
     if (hasScanned === undefined) setLocalHasScanned(false);
 
     window.setTimeout(() => {
@@ -70,30 +92,84 @@ export default function ReceiptScan({
                 <p className="eyebrow">読み取り結果</p>
                 <h2 id="scan-result-title">{scannedItems.length}品を見つけました</h2>
               </div>
-              <span className="status-badge">確認済み</span>
+              <button
+                className="button button--outline scan-edit-button"
+                onClick={() => setIsEditing((value) => !value)}
+                type="button"
+              >
+                {isEditing ? '編集を終える' : '内容を修正'}
+              </button>
             </div>
 
             <ul className="scan-result__list scan-results">
-              {scannedItems.map((item, index) => {
+              {visibleResultItems.map((item, index) => {
                 const label = itemLabel(item);
                 const amount = typeof item === 'object' ? item.amount ?? item.quantity : null;
 
                 return (
                   <li className="scan-result-item" key={item?.id ?? `${label}-${index}`}>
                     <span className="scan-result__check" aria-hidden="true">✓</span>
-                    <span>{label}</span>
-                    {amount && <span className="scan-result__amount">{amount}</span>}
+                    {isEditing ? (
+                      <>
+                        <input
+                          aria-label={`${index + 1}品目の商品名`}
+                          className="scan-result__input"
+                          onChange={(event) => setDraftItems((current) => current.map((candidate) => (
+                            candidate.id === item.id ? { ...candidate, name: event.target.value } : candidate
+                          )))}
+                          type="text"
+                          value={label}
+                        />
+                        <input
+                          aria-label={`${label || index + 1}の分量`}
+                          className="scan-result__amount-input"
+                          onChange={(event) => setDraftItems((current) => current.map((candidate) => (
+                            candidate.id === item.id ? { ...candidate, amount: event.target.value } : candidate
+                          )))}
+                          placeholder="分量"
+                          type="text"
+                          value={amount ?? ''}
+                        />
+                        <button
+                          aria-label={`${label || `${index + 1}品目`}を削除`}
+                          className="scan-result__remove"
+                          onClick={() => setDraftItems((current) => current.filter((candidate) => candidate.id !== item.id))}
+                          type="button"
+                        >
+                          ×
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span>{label}</span>
+                        {amount && <span className="scan-result__amount">{amount}</span>}
+                      </>
+                    )}
                   </li>
                 );
               })}
             </ul>
 
+            {isEditing && (
+              <button
+                className="button button--secondary button--full scan-add-button"
+                onClick={() => setDraftItems((current) => [
+                  ...current,
+                  { id: `receipt-added-${Date.now()}`, name: '', amount: '', ingredientId: null },
+                ])}
+                type="button"
+              >
+                ＋ 商品を追加
+              </button>
+            )}
+
             <button
               className="button button--primary button--large button--full primary-button full-width"
               type="button"
+              disabled={isEditing || scannedItems.length === 0}
               onClick={() => onRegister?.(scannedItems)}
             >
-              冷蔵庫に登録する
+              {isEditing ? '編集を終えてください' : '購入済みにして冷蔵庫へ登録'}
             </button>
             <p className="action-help">登録すると次回の献立条件に利用されます。</p>
           </section>
@@ -109,3 +185,4 @@ export default function ReceiptScan({
     </section>
   );
 }
+
