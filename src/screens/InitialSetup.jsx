@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import Header from "../components/Header";
 import { allergenOptions, setupOptions } from "../data";
 
@@ -78,6 +79,8 @@ export default function InitialSetup({
   onSubmit,
   onSkip,
 }) {
+  const [step, setStep] = useState(1);
+  const formRef = useRef(null);
   const profile = value ?? profileProp ?? {};
   const emitChange = onChange ?? onProfileChange;
   const complete = onComplete ?? onSubmit;
@@ -96,7 +99,18 @@ export default function InitialSetup({
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    if (step === 1) {
+      goToStep(2);
+      return;
+    }
     complete?.(profile);
+  };
+
+  const goToStep = (nextStep) => {
+    setStep(nextStep);
+    requestAnimationFrame(() => {
+      formRef.current?.closest(".app-content")?.scrollTo({ top: 0, behavior: "auto" });
+    });
   };
 
   return (
@@ -106,118 +120,134 @@ export default function InitialSetup({
         title="あなたに合う献立を準備します"
       />
 
-      <form className="screen-body form-stack" onSubmit={handleSubmit}>
-        <div className="step-indicator" aria-label="初期設定 1/2">
+      <form className="screen-body form-stack" onSubmit={handleSubmit} ref={formRef}>
+        <div className="step-indicator" aria-label={`初期設定 ${step}/2`}>
           <span className="step-indicator__label">初期設定</span>
-          <span className="step-indicator__count">1 / 2</span>
+          <span className="step-indicator__count">{step} / 2</span>
         </div>
 
         <p className="screen-lead">
-          答えられる項目だけで大丈夫です。入力内容をもとに、無理なく続けられる献立を提案します。
+          {step === 1
+            ? "答えられる項目だけで大丈夫です。安全に献立を提案するための基本情報を設定します。"
+            : "普段の希望や手持ちの食材を設定すると、より自分に合う献立を提案できます。"}
         </p>
 
-        <label className="form-field">
-          <span className="form-label">名前</span>
-          <input
-            autoComplete="nickname"
-            onChange={(event) => updateField("name", event.target.value)}
-            placeholder="user"
-            type="text"
-            value={profile.name ?? ""}
-          />
-        </label>
+        {step === 1 ? (
+          <>
+            <label className="form-field">
+              <span className="form-label">名前</span>
+              <input
+                autoComplete="nickname"
+                onChange={(event) => updateField("name", event.target.value)}
+                placeholder="user"
+                type="text"
+                value={profile.name ?? ""}
+              />
+            </label>
 
-        <label className="form-field">
-          <span className="form-label">年齢</span>
-          <span className="input-with-unit">
-            <input
-              inputMode="numeric"
-              min="0"
-              onChange={(event) => updateField("age", event.target.value)}
-              placeholder="例：19"
-              type="number"
-              value={profile.age ?? ""}
+            <label className="form-field">
+              <span className="form-label">年齢</span>
+              <span className="input-with-unit">
+                <input
+                  inputMode="numeric"
+                  min="0"
+                  onChange={(event) => updateField("age", event.target.value)}
+                  placeholder="例：19"
+                  type="number"
+                  value={profile.age ?? ""}
+                />
+                <span>歳</span>
+              </span>
+            </label>
+
+            <ChoiceGroup
+              legend="性別（任意）"
+              name="gender"
+              onChange={(nextValue) => updateField("gender", nextValue)}
+              options={genders}
+              value={profile.gender ?? ""}
             />
-            <span>歳</span>
-          </span>
-        </label>
 
-        <ChoiceGroup
-          legend="性別（任意）"
-          name="gender"
-          onChange={(nextValue) => updateField("gender", nextValue)}
-          options={genders}
-          value={profile.gender ?? ""}
-        />
-
-        <ChoiceGroup
-          legend="アレルギー（該当するものを選択）"
-          multiple
-          name="allergies"
-          onChange={(nextValue) => updateField("allergies", nextValue)}
-          options={allergenOptions}
-          value={profile.allergies ?? []}
-        />
-        <p className="form-help">表示対象のアレルゲンをデータとして管理し、該当食材を含む料理は候補から外します。</p>
-
-        <label className="form-field">
-          <span className="form-label">苦手な食材（任意）</span>
-          <input
-            onChange={(event) => updateField("dislikes", listValue(event.target.value))}
-            placeholder="例：きのこ、辛いもの"
-            type="text"
-            value={textValue(profile.dislikes)}
-          />
-        </label>
-
-        <ChoiceGroup
-          legend="普段の献立で優先したいこと（任意）"
-          multiple
-          name="goals"
-          onChange={(nextValue) => updateField("goals", nextValue)}
-          options={goals}
-          value={profile.goals ?? []}
-        />
-
-        <label className="form-field">
-          <span className="form-label">冷蔵庫にある食材（任意）</span>
-          <textarea
-            onChange={(event) => updateField("fridge", listValue(event.target.value))}
-            placeholder="例：卵、豆腐、キャベツ"
-            rows="2"
-            value={textValue(profile.fridge)}
-          />
-          <span className="form-help">手持ちの食材を優先した提案に使います</span>
-        </label>
-
-        <label className="form-field">
-          <span className="form-label">1か月の食費予算</span>
-          <span className="input-with-unit">
-            <input
-              inputMode="numeric"
-              min="0"
-              onChange={(event) => updateField("monthlyBudget", event.target.value)}
-              placeholder="例：25000"
-              type="number"
-              value={profile.monthlyBudget ?? ""}
+            <ChoiceGroup
+              legend="アレルギー（該当するものを選択）"
+              multiple
+              name="allergies"
+              onChange={(nextValue) => updateField("allergies", nextValue)}
+              options={allergenOptions}
+              value={profile.allergies ?? []}
             />
-            <span>円</span>
-          </span>
-        </label>
+            <p className="form-help">選んだ食材を含む料理は、献立候補から除外します。</p>
+          </>
+        ) : (
+          <>
+            <label className="form-field">
+              <span className="form-label">苦手な食材（任意）</span>
+              <input
+                onChange={(event) => updateField("dislikes", listValue(event.target.value))}
+                placeholder="例：きのこ、辛いもの"
+                type="text"
+                value={textValue(profile.dislikes)}
+              />
+            </label>
 
-        <div className="form-actions sticky-actions">
+            <ChoiceGroup
+              legend="普段の献立で優先したいこと（任意）"
+              multiple
+              name="goals"
+              onChange={(nextValue) => updateField("goals", nextValue)}
+              options={goals}
+              value={profile.goals ?? []}
+            />
+
+            <label className="form-field">
+              <span className="form-label">冷蔵庫にある食材（任意）</span>
+              <textarea
+                onChange={(event) => updateField("fridge", listValue(event.target.value))}
+                placeholder="例：卵、豆腐、キャベツ"
+                rows="2"
+                value={textValue(profile.fridge)}
+              />
+              <span className="form-help">手持ちの食材を優先した提案に使います</span>
+            </label>
+
+            <label className="form-field">
+              <span className="form-label">1か月の食費予算（任意）</span>
+              <span className="input-with-unit">
+                <input
+                  inputMode="numeric"
+                  min="0"
+                  onChange={(event) => updateField("monthlyBudget", event.target.value)}
+                  placeholder="例：25000"
+                  type="number"
+                  value={profile.monthlyBudget ?? ""}
+                />
+                <span>円</span>
+              </span>
+            </label>
+          </>
+        )}
+
+        <div className={`form-actions sticky-actions${step === 2 ? " form-actions--split" : ""}`}>
+          {step === 2 && (
+            <button className="button button--secondary" onClick={() => goToStep(1)} type="button">
+              戻る
+            </button>
+          )}
           <button className="button button--primary button--large" type="submit">
-            初期設定を完了
+            {step === 1 ? "次へ" : "初期設定を完了"}
           </button>
-          <button
-            className="button button--text"
-            onClick={() => (onSkip ?? complete)?.(profile)}
-            type="button"
-          >
-            任意項目をスキップして進む
-          </button>
+          {step === 2 && (
+            <button
+              className="button button--text"
+              onClick={() => (onSkip ?? complete)?.(profile)}
+              type="button"
+            >
+              任意項目をスキップして進む
+            </button>
+          )}
         </div>
       </form>
     </section>
   );
 }
+
