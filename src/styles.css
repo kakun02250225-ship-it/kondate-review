@@ -2,22 +2,22 @@
   --ink: #2f2924;
   --muted: #756b62;
   --soft: #9a8d82;
-  --paper: #fffdf9;
-  --cream: #f7f1e8;
-  --cream-2: #efe4d5;
-  --line: #eadfD1;
-  --orange: #f47a3c;
-  --orange-dark: #d95d24;
-  --orange-soft: #fff0e6;
+  --paper: #fffcf8;
+  --cream: #f8f3ec;
+  --cream-2: #efe5d9;
+  --line: #e7ddd2;
+  --orange: #f4753b;
+  --orange-dark: #df6128;
+  --orange-soft: #ffede3;
   --green: #438067;
   --green-soft: #e8f3ed;
   --red: #c8574a;
   --yellow: #f4c96b;
-  --shadow-sm: 0 5px 16px rgba(79, 55, 35, 0.08);
-  --shadow-md: 0 14px 40px rgba(74, 49, 28, 0.14);
-  --radius-sm: 12px;
-  --radius: 18px;
-  --radius-lg: 26px;
+  --shadow-sm: 0 3px 10px rgba(79, 55, 35, 0.055);
+  --shadow-md: 0 10px 28px rgba(74, 49, 28, 0.11);
+  --radius-sm: 10px;
+  --radius: 16px;
+  --radius-lg: 20px;
 }
 
 * {
@@ -85,8 +85,8 @@ a {
 .phone-frame,
 .phone-shell {
   position: relative;
-  width: min(390px, 100vw);
-  height: min(844px, calc(100dvh - 48px));
+  width: min(360px, 100vw);
+  height: min(780px, calc(100dvh - 48px));
   min-height: 640px;
   overflow: hidden;
   display: flex;
@@ -94,7 +94,7 @@ a {
   color: var(--ink);
   background: var(--paper);
   border: 1px solid rgba(74, 49, 28, 0.12);
-  border-radius: 34px;
+  border-radius: 30px;
   box-shadow: var(--shadow-md), 0 0 0 8px rgba(255, 255, 255, 0.42);
 }
 
@@ -166,12 +166,12 @@ a {
 
 .screen {
   min-height: 100%;
-  padding: 0 0 112px;
+  padding: 0 0 98px;
 }
 
 .screen-content,
 .screen-body {
-  padding: 18px;
+  padding: 14px;
 }
 
 .screen--setup,
@@ -188,10 +188,10 @@ a {
   top: 0;
   z-index: 12;
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) 42px;
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
   align-items: center;
-  min-height: 82px;
-  padding: 22px 14px 10px;
+  min-height: 66px;
+  padding: 12px 12px 8px;
   background: rgba(255, 253, 249, 0.94);
   border-bottom: 1px solid rgba(234, 223, 209, 0.72);
   backdrop-filter: blur(16px);
@@ -212,7 +212,7 @@ a {
 .header__title,
 .header-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1.25;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -224,7 +224,7 @@ a {
   margin: 3px 0 0;
   overflow: hidden;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 9px;
   line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -235,8 +235,8 @@ a {
 .header-back,
 .header-action,
 .icon-button {
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
   padding: 0;
@@ -286,7 +286,7 @@ a {
 .section-kicker {
   margin: 0 0 6px;
   color: var(--orange-dark);
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -332,7 +332,7 @@ a {
 .form-section h2,
 .section-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.4;
   font-weight: 800;
 }
@@ -492,7 +492,7 @@ textarea:focus {
 .panel,
 .info-card,
 .summary-card {
-  padding: 16px;
+  padding: 14px;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -542,14 +542,14 @@ textarea:focus {
 .outline-button,
 .danger-button,
 .text-button {
-  min-height: 52px;
+  min-height: 48px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 9px;
-  padding: 12px 18px;
-  border-radius: 15px;
-  font-size: 14px;
+  padding: 11px 15px;
+  border-radius: 11px;
+  font-size: 13px;
   line-height: 1.3;
   font-weight: 800;
   cursor: pointer;
@@ -608,7 +608,7 @@ textarea:focus {
 }
 
 .button--large {
-  min-height: 54px;
+  min-height: 50px;
 }
 
 .button--full {
@@ -648,8 +648,8 @@ textarea:focus {
   z-index: 8;
   display: grid;
   gap: 8px;
-  margin: 20px -18px -112px;
-  padding: 14px 18px calc(94px + env(safe-area-inset-bottom));
+  margin: 18px -14px -98px;
+  padding: 12px 14px calc(82px + env(safe-area-inset-bottom));
   background: linear-gradient(to bottom, rgba(255, 253, 249, 0), var(--paper) 14%, var(--paper));
 }
 
@@ -681,18 +681,18 @@ textarea:focus {
 .bottom-navigation {
   position: absolute;
   z-index: 20;
-  left: 10px;
-  right: 10px;
-  bottom: 9px;
-  min-height: 72px;
+  left: 9px;
+  right: 9px;
+  bottom: 8px;
+  min-height: 64px;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: center;
-  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  padding: 4px 4px calc(4px + env(safe-area-inset-bottom));
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(222, 210, 196, 0.9);
-  border-radius: 22px;
-  box-shadow: 0 12px 35px rgba(70, 48, 31, 0.16);
+  border-radius: 16px;
+  box-shadow: 0 7px 20px rgba(70, 48, 31, 0.1);
   backdrop-filter: blur(18px);
 }
 
@@ -701,7 +701,7 @@ textarea:focus {
 .tab-item {
   position: relative;
   min-width: 0;
-  min-height: 56px;
+  min-height: 50px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -710,8 +710,8 @@ textarea:focus {
   padding: 5px 2px;
   color: #8f8277;
   background: transparent;
-  border-radius: 15px;
-  font-size: 9px;
+  border-radius: 11px;
+  font-size: 8px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -727,8 +727,14 @@ textarea:focus {
 .nav-icon,
 .tab-icon,
 .bottom-nav__icon {
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
+}
+
+.bottom-nav__icon svg {
+  width: 19px;
+  height: 19px;
+  display: block;
 }
 
 .recipe-card {
@@ -949,7 +955,7 @@ textarea:focus {
 .shopping-groups,
 .ingredient-list {
   display: grid;
-  gap: 16px;
+  gap: 12px;
 }
 
 .ingredient-list__items,
@@ -971,7 +977,7 @@ textarea:focus {
   overflow: hidden;
   background: #fff;
   border: 1px solid var(--line);
-  border-radius: 17px;
+  border-radius: 14px;
 }
 
 .ingredient-group__title,
@@ -981,7 +987,7 @@ textarea:focus {
   align-items: center;
   gap: 8px;
   margin: 0;
-  padding: 11px 13px;
+  padding: 9px 11px;
   color: #675b51;
   background: var(--cream);
   border-bottom: 1px solid var(--line);
@@ -995,8 +1001,8 @@ textarea:focus {
   display: flex;
   align-items: center;
   gap: 11px;
-  min-height: 53px;
-  padding: 10px 13px;
+  min-height: 48px;
+  padding: 9px 11px;
   border-bottom: 1px solid #f2ebe4;
 }
 
@@ -1543,17 +1549,17 @@ textarea:focus {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px 12px;
-  padding: 18px;
+  padding: 14px;
   background:
     radial-gradient(circle at 100% 0, rgba(244, 201, 107, 0.38), transparent 10rem),
     linear-gradient(145deg, #fff3e8, #fffaf5);
   border: 1px solid #f3dbc7;
-  border-radius: 21px;
+  border-radius: 17px;
 }
 
 .recommendation-hero h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 17px;
   line-height: 1.4;
 }
 
@@ -1562,8 +1568,8 @@ textarea:focus {
   grid-column: 1 / -1;
   margin: 0;
   color: var(--muted);
-  font-size: 12px;
-  line-height: 1.7;
+  font-size: 10px;
+  line-height: 1.6;
 }
 
 .recommendation-hero__badge,
@@ -1663,8 +1669,8 @@ textarea:focus {
 }
 
 .shopping-progress {
-  padding: 14px;
-  margin-bottom: 16px;
+  padding: 12px;
+  margin-bottom: 13px;
   background: var(--cream);
   border-radius: 15px;
 }
@@ -1679,13 +1685,52 @@ textarea:focus {
 
 .shopping-plan-card {
   display: grid;
-  gap: 12px;
-  margin: 14px 0 16px;
-  padding: 15px;
+  gap: 10px;
+  margin: 0 0 13px;
+  padding: 13px;
   background: #fff;
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: 15px;
   box-shadow: var(--shadow-sm);
+}
+
+.shopping-plan-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+}
+
+.shopping-plan-summary h2,
+.shopping-plan-summary p {
+  margin: 0;
+}
+
+.shopping-plan-summary h2 {
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.shopping-plan-summary p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.shopping-plan-details {
+  border-top: 1px solid #f1e8de;
+}
+
+.shopping-plan-details summary {
+  padding: 10px 0 0;
+  color: var(--orange-dark);
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.shopping-plan-details[open] summary {
+  padding-bottom: 8px;
 }
 
 .shopping-plan-days {
@@ -2595,10 +2640,10 @@ textarea:focus {
   display: grid;
   gap: 12px;
   margin-top: 22px;
-  padding: 16px;
+  padding: 14px;
   background: var(--green-soft);
   border: 1px solid rgba(67, 128, 103, 0.2);
-  border-radius: 18px;
+  border-radius: 15px;
 }
 
 .priority-preview ol,
@@ -2637,42 +2682,47 @@ textarea:focus {
 
 .home-empty-state {
   display: grid;
-  gap: 18px;
+  gap: 14px;
 }
 
 .home-welcome-card {
   display: grid;
-  gap: 12px;
-  padding: 22px 18px;
+  gap: 7px;
+  padding: 13px;
   background:
     radial-gradient(circle at 100% 0, rgba(244, 201, 107, 0.45), transparent 11rem),
     linear-gradient(145deg, #fff0e3, #fffaf6);
   border: 1px solid #f3d6c0;
-  border-radius: 24px;
+  border-radius: 18px;
   box-shadow: var(--shadow-sm);
 }
 
 .home-welcome-card h2 {
   margin: 0;
-  font-size: 22px;
-  line-height: 1.45;
+  font-size: 16px;
+  line-height: 1.35;
 }
 
 .home-welcome-card p {
   margin: 0;
   color: var(--muted);
-  font-size: 12px;
-  line-height: 1.75;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.home-welcome-card .button--large {
+  min-height: 43px;
+  font-size: 11px;
 }
 
 .calendar-overview {
   display: grid;
-  gap: 12px;
-  margin-top: 18px;
-  padding: 16px;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
   background: #fff;
   border: 1px solid var(--line);
-  border-radius: 20px;
+  border-radius: 16px;
   box-shadow: var(--shadow-sm);
 }
 
@@ -2689,7 +2739,7 @@ textarea:focus {
 
 .calendar-day {
   min-width: 0;
-  min-height: 58px;
+  min-height: 44px;
   display: grid;
   place-items: center;
   align-content: center;
@@ -2698,7 +2748,7 @@ textarea:focus {
   color: var(--muted);
   background: #faf7f2;
   border: 1px solid transparent;
-  border-radius: 13px;
+  border-radius: 10px;
   cursor: default;
 }
 
@@ -2742,23 +2792,23 @@ button.calendar-day {
 
 .home-flow {
   display: grid;
-  gap: 9px;
+  gap: 7px;
 }
 
 .home-flow > div {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
+  grid-template-columns: 26px minmax(0, 1fr);
   gap: 2px 10px;
-  padding: 12px;
+  padding: 7px 9px;
   background: #fff;
   border: 1px solid var(--line);
-  border-radius: 15px;
+  border-radius: 12px;
 }
 
 .home-flow > div > span {
   grid-row: 1 / 3;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   display: grid;
   place-items: center;
   color: #fff;
@@ -2769,12 +2819,12 @@ button.calendar-day {
 }
 
 .home-flow strong {
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .home-flow small {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 8px;
 }
 
 .recommendation-hero__edit {
