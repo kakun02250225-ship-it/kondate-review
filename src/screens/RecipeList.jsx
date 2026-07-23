@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import { formatCookingTime, recipes } from "../data";
 
@@ -28,6 +29,12 @@ export default function RecipeList({
   const planRecipeIds = [...new Set(days.flatMap((day) => Object.values(day.meals ?? {})))];
   const completedCount = planRecipeIds.filter((id) => completedRecipeIds.includes(id)).length;
   const feedbackCount = planRecipeIds.filter((id) => Boolean(feedbackByRecipe[id])).length;
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const selectedDay = days[Math.min(selectedDayIndex, Math.max(0, days.length - 1))];
+
+  useEffect(() => {
+    if (selectedDayIndex >= days.length) setSelectedDayIndex(0);
+  }, [days.length, selectedDayIndex]);
 
   return (
     <section className="screen recipe-list-screen">
@@ -55,17 +62,37 @@ export default function RecipeList({
 
         {days.length ? (
           <div className="recipe-list-days">
-            {days.map((day, dayIndex) => (
-              <section className="recipe-list-day" key={day.id ?? day.date ?? dayIndex}>
+            <section className="recipe-date-picker" aria-label="レシピを表示する日付">
+              <span className="eyebrow">カレンダー</span>
+              <h2>日付を押すと献立へ移動</h2>
+              <div className="recipe-date-tabs" role="tablist" aria-label="献立の日付">
+                {days.map((day, dayIndex) => (
+                  <button
+                    aria-selected={selectedDayIndex === dayIndex}
+                    className={`recipe-date-tab${selectedDayIndex === dayIndex ? " is-selected" : ""}`}
+                    key={day.id ?? day.date ?? dayIndex}
+                    onClick={() => setSelectedDayIndex(dayIndex)}
+                    role="tab"
+                    type="button"
+                  >
+                    <small>{day.weekday ?? `DAY ${dayIndex + 1}`}</small>
+                    <strong>{day.shortLabel ?? day.label ?? day.dateLabel ?? `${dayIndex + 1}日目`}</strong>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {selectedDay && (
+              <section className="recipe-list-day" key={selectedDay.id ?? selectedDay.date ?? selectedDayIndex}>
                 <div className="section-heading">
                   <div>
-                    <span className="eyebrow">DAY {dayIndex + 1}</span>
-                    <h2>{day.label ?? day.dateLabel ?? `${dayIndex + 1}日目`}</h2>
+                    <span className="eyebrow">DAY {selectedDayIndex + 1}</span>
+                    <h2>{selectedDay.label ?? selectedDay.dateLabel ?? `${selectedDayIndex + 1}日目`}</h2>
                   </div>
                 </div>
 
                 <div className="recipe-direct-list">
-                  {Object.entries(day.meals ?? {}).map(([mealType, recipeId]) => {
+                  {Object.entries(selectedDay.meals ?? {}).map(([mealType, recipeId]) => {
                     const recipe = recipeMap.get(recipeId);
                     if (!recipe) return null;
                     const isSelected = selectedRecipeId === recipe.id;
@@ -79,7 +106,7 @@ export default function RecipeList({
                       >
                         <button
                           className="recipe-direct-card__open"
-                          onClick={() => onSelectRecipe?.(recipe, { dayIndex, mealType })}
+                          onClick={() => onSelectRecipe?.(recipe, { dayIndex: selectedDayIndex, mealType })}
                           type="button"
                         >
                           <img src={recipe.image} alt="" loading="lazy" />
@@ -113,7 +140,7 @@ export default function RecipeList({
                   })}
                 </div>
               </section>
-            ))}
+            )}
           </div>
         ) : (
           <div className="empty-card">
@@ -125,3 +152,4 @@ export default function RecipeList({
     </section>
   );
 }
+
