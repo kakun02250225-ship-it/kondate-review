@@ -115,39 +115,34 @@ export default function ShoppingList({
           </div>
         ) : (
           <>
-            <div className="info-card info-card--warm">
-              <span className="info-card__icon" aria-hidden="true">🍳</span>
-              <div>
-                <p className="eyebrow">対象の献立</p>
-                <h2>{planLabel}</h2>
-                <p>下の料理を作るために必要な食材だけを表示しています。</p>
-              </div>
-            </div>
-
             {planMeals.length > 0 && (
               <section className="shopping-plan-card" aria-label="この買い物リストの対象料理">
-                <div className="section-heading">
+                <div className="shopping-plan-summary">
                   <div>
                     <span className="eyebrow">買い物対象</span>
-                    <h2>この料理の材料を買います</h2>
+                    <h2>{planLabel}</h2>
+                    <p>この献立に必要な材料をまとめています</p>
                   </div>
                   <span className="status-badge badge">{plannedMealCount}食分</span>
                 </div>
-                <div className="shopping-plan-days">
-                  {planMeals.map((day) => (
-                    <div className="shopping-plan-day" key={day.id}>
-                      <strong>{day.label}</strong>
-                      <ul className="shopping-plan-meals">
-                        {day.meals.map((meal) => (
-                          <li className="shopping-plan-meal" key={meal.id}>
-                            <span className="shopping-plan-meal__label">{meal.label}</span>
-                            <span>{meal.name}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
+                <details className="shopping-plan-details">
+                  <summary>対象の料理を確認</summary>
+                  <div className="shopping-plan-days">
+                    {planMeals.map((day) => (
+                      <div className="shopping-plan-day" key={day.id}>
+                        <strong>{day.label}</strong>
+                        <ul className="shopping-plan-meals">
+                          {day.meals.map((meal) => (
+                            <li className="shopping-plan-meal" key={meal.id}>
+                              <span className="shopping-plan-meal__label">{meal.label}</span>
+                              <span>{meal.name}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </details>
               </section>
             )}
 
@@ -217,3 +212,4 @@ export default function ShoppingList({
     </section>
   );
 }
+
