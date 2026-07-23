@@ -2089,7 +2089,7 @@ textarea:focus {
 
 .scan-result__list li {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 8px;
   padding: 9px 0;
@@ -2099,6 +2099,45 @@ textarea:focus {
 
 .scan-result__check { color: var(--green); font-weight: 900; }
 .scan-result__amount { color: var(--soft); font-size: 10px; }
+
+.scan-edit-button {
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 10px;
+}
+
+.scan-result__input,
+.scan-result__amount-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  padding: 8px 9px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 12px;
+}
+
+.scan-result__amount-input {
+  width: 68px;
+}
+
+.scan-result__remove {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  color: #b24d36;
+  background: #fff1ed;
+  border: 0;
+  border-radius: 50%;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.scan-add-button {
+  margin: 10px 0 14px;
+}
 
 .date-meal-label {
   display: flex;
@@ -2874,6 +2913,68 @@ button.calendar-day {
   gap: 10px;
 }
 
+.recipe-date-picker {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.recipe-date-picker h2 {
+  margin: 0 0 5px;
+  font-size: 13px;
+}
+
+.recipe-date-tabs {
+  display: flex;
+  gap: 7px;
+  padding: 2px 0 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+}
+
+.recipe-date-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.recipe-date-tab {
+  min-width: 58px;
+  min-height: 58px;
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  padding: 7px;
+  color: var(--muted);
+  background: var(--cream);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  scroll-snap-align: start;
+  cursor: pointer;
+}
+
+.recipe-date-tab small {
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.recipe-date-tab strong {
+  max-width: 52px;
+  overflow: hidden;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recipe-date-tab.is-selected {
+  color: var(--orange-dark);
+  background: var(--orange-soft);
+  border-color: #f3b58f;
+}
+
 .recipe-list-day + .recipe-list-day {
   margin-top: 22px;
 }
@@ -3251,6 +3352,13 @@ button.calendar-day {
   line-height: 1.65;
 }
 
+.cooking-step-card__progress {
+  justify-self: end;
+  color: var(--orange-dark);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 @media (max-width: 520px) {
   html,
   body {
@@ -3302,3 +3410,4 @@ button.calendar-day {
     transition-duration: 0.01ms !important;
   }
 }
+
