@@ -179,14 +179,6 @@ export default function ConditionInput({
       />
 
       <form className="screen-body form-stack" onSubmit={handleSubmit}>
-        <div className="info-card info-card--warm condition-intro-card">
-          <span className="info-card__icon" aria-hidden="true">✨</span>
-          <div>
-            <strong>空欄のままでも作成できます</strong>
-            <p>入力がある場合は、安全→時間→予算→負担・体調→栄養→味の順に優先して候補を並べます。</p>
-          </div>
-        </div>
-
         <fieldset className="form-field date-range-field">
           <legend className="form-label">献立を作る日付（1〜7日）</legend>
           <div className="date-range-inputs">
@@ -241,6 +233,14 @@ export default function ConditionInput({
             ? `1日${selectedMealSlots.length}食 × ${selectedDayCount || "−"}日（合計${selectedDayCount ? selectedMealSlots.length * selectedDayCount : "−"}食）`
             : "朝・昼・夜のうち、少なくとも1食を選んでください"}
         </p>
+
+        <div className="info-card info-card--warm condition-intro-card">
+          <span className="info-card__icon" aria-hidden="true">✨</span>
+          <div>
+            <strong>ここから下は、入力しなくても作成できます</strong>
+            <p>希望がある場合だけ選んでください。安全→時間→予算→負担・体調→栄養→味の順に優先して候補を並べます。</p>
+          </div>
+        </div>
 
         <div className="form-section-heading">
           <span className="eyebrow">ここからは任意</span>
@@ -334,3 +334,4 @@ export default function ConditionInput({
     </section>
   );
 }
+
